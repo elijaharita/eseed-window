@@ -1,7 +1,9 @@
 #include <eseed/window/window.hpp>
 
+#include "keycodemappings.hpp"
 #include <Windows.h>
 #include <iostream>
+#include <set>
 
 using namespace esd::window;
 
@@ -11,10 +13,14 @@ public:
     HWND hWnd;
     bool closeRequested;
 
+    static KeyCode fromWin32KeyCode(WPARAM wParam, LPARAM lParam);
+    static int toWin32KeyCode(KeyCode keyCode);
+
+    // Win32 WNDPROC
     static LRESULT CALLBACK wndProc(
         HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     );
-
+    
     static RECT createWindowRect(Size size);
 };
 
@@ -76,13 +82,53 @@ Size Window::getSize() {
     return { 1, 1 };
 }
 
-void Window::setSize(Size size) {
-    RECT rect;
-    AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW ^ WS_OVERLAPPED, FALSE, NULL);
+// TODO: retain window position
+void Window::setSize(const Size& size) {
+    RECT rect = Impl::createWindowRect(size);
+    SetWindowPos(
+        impl->hWnd, HWND_TOP,
+        0,
+        0,
+        rect.right - rect.left,
+        rect.bottom - rect.top,
+        NULL
+    );
 }
 
 bool Window::isCloseRequested() {
     return impl->closeRequested;
+}
+
+// TODO: improve key mapping performance
+int Window::Impl::toWin32KeyCode(KeyCode keyCode) {
+    for (const auto& it : keyCodeMappings)
+        if (it.second == keyCode) return it.first;
+    return NULL;
+}
+
+// TODO: improve key mapping performance
+KeyCode Window::Impl::fromWin32KeyCode(WPARAM wParam, LPARAM lParam) {
+
+    // Differentiate left and right modifier keys
+    bool extended = lParam & 0x01000000;
+    switch (wParam) {
+    case VK_SHIFT:
+        wParam = 
+            MapVirtualKeyA((lParam & 0x00ff0000) >> 16, MAPVK_VSC_TO_VK_EX);
+        break;
+    case VK_CONTROL:
+        wParam = extended ? VK_RCONTROL : VK_LCONTROL;
+        break;
+    case VK_MENU:
+        wParam = extended ? VK_RMENU : VK_LMENU;
+        break;
+    }
+
+    try {
+        return keyCodeMappings.at((int)wParam);
+    } catch (std::out_of_range&) {
+        return KeyCode::Unknown;
+    }
 }
 
 LRESULT CALLBACK Window::Impl::wndProc(
@@ -93,6 +139,17 @@ LRESULT CALLBACK Window::Impl::wndProc(
     switch (uMsg) {
     case WM_CLOSE:
         window->impl->closeRequested = true;
+        return NULL;
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+        {
+            KeyEvent event;
+            event.down = !(HIWORD(lParam) & KF_UP);
+            event.keyCode = fromWin32KeyCode(wParam, lParam);
+            if (window->keyHandler) window->keyHandler(event);
+        }
         return NULL;
     }
 
