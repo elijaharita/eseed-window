@@ -6,7 +6,19 @@ enum KeyCode {
     Unknown = 0,
     Backspace = 8,
         Back = Backspace,
+    Tab = 9,
+    Escape = 27,
+        Esc = Escape,
     Space = 32,
+    Quote = 39, // ' "
+    Comma = 44, // , <
+        Less = Comma, // , <
+    Dash = 45, // - _
+        Underscore = Dash, // - _
+    Period = 46, // . >
+        Greater = Period, // . >
+    Slash = 47, // / ?
+        QuestionMark = Slash, // / ?
     Num0 = 48,
         RParenthesis = Num0,
         RParen = RParenthesis,
@@ -28,8 +40,12 @@ enum KeyCode {
     Num8 = 56,
         Asterisk = Num8,
     Num9 = 57,
-        LParenthesis = Num0,
+        LParenthesis = Num9,
         LParen = LParenthesis,
+    Semicolon = 59, // : ;
+        Colon = Semicolon, // : ;
+    Equal = 61, // = +
+        Plus = Equal, // = +
     A = 65,
     B = 66,
     C = 67,
@@ -56,7 +72,17 @@ enum KeyCode {
     X = 88,
     Y = 89,
     Z = 90,
-    Tab,
+    LBracket = 91, // [ {
+        LBrace = LBracket, // [ {
+    Backslash = 92, // \ |
+        Pipe = Backslash, // \ |
+    RBracket = 93, // ] }
+        RBrace = RBracket, // ] }
+    Backtick = 96, // ` ~
+        Grave = Backtick, // ` ~
+        Tilde = Backtick, // ` ~
+    Delete = 127,
+        Del = Delete,
     Clear,
     Return,
     LShift,
@@ -71,8 +97,6 @@ enum KeyCode {
     CapsLock,
         CapsLk = CapsLock,
         Caps = CapsLock,
-    Escape,
-        Esc = Escape,
     PageUp,
         PgUp = PageUp,
     PageDown,
@@ -88,8 +112,6 @@ enum KeyCode {
         PrtScr = PrintScreen,
     Insert,
         Ins = Insert,
-    Delete,
-        Del = Delete,
     LMeta,
     RMeta,
     Numpad0,
@@ -139,28 +161,6 @@ enum KeyCode {
     NumLk = NumLock,
     ScrollLock,
     ScrLk = ScrollLock,
-    Semicolon, // : ;
-    Colon = Semicolon, // : ;
-    Equal, // = +
-    Plus = Equal, // = +
-    Comma, // , <
-    Less = Comma, // , <
-    Dash, // - _
-    Underscore = Dash, // - _
-    Period, // . >
-    Greater = Period, // . >
-    Slash, // / ?
-    QuestionMark = Slash, // / ?
-    Backtick, // ` ~
-    Grave = Backtick, // ` ~
-    Tilde = Backtick, // ` ~
-    LBracket, // [ {
-    LBrace = LBracket, // [ {
-    Backslash, // \ |
-    Pipe = Backslash, // \ |
-    RBracket, // ] }
-    RBrace = RBracket, // ] }
-    Quote, // ' "
 };
 
 }
