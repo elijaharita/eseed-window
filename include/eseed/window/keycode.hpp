@@ -7,13 +7,17 @@ enum KeyCode {
     Backspace = 8,
         Back = Backspace,
     Tab = 9,
+    Return = 10,
+        Enter = Return,
     Escape = 27,
         Esc = Escape,
     Space = 32,
-    Quote = 39, // ' "
+    Apostrophe = 39, // ' "
+        Quote = Apostrophe, // ' "
     Comma = 44, // , <
         Less = Comma, // , <
     Dash = 45, // - _
+        Minus = Dash, // - _
         Underscore = Dash, // - _
     Period = 46, // . >
         Greater = Period, // . >
@@ -84,7 +88,6 @@ enum KeyCode {
     Delete = 127,
         Del = Delete,
     Clear,
-    Return,
     LShift,
     RShift,
     LControl,
@@ -114,6 +117,8 @@ enum KeyCode {
         Ins = Insert,
     LMeta,
     RMeta,
+    Menu,
+        Context = Menu,
     Numpad0,
     Numpad1,
     Numpad2,

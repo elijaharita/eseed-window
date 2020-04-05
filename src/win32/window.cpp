@@ -12,16 +12,30 @@ public:
     HINSTANCE hInstance;
     HWND hWnd;
     bool closeRequested;
+    
+    // Create a Win32 RECT adjusted for the window style based on an
+    // eseed::window Size
+    static RECT createWindowRect(Size size);
 
-    static KeyCode fromWin32KeyCode(WPARAM wParam, LPARAM lParam);
-    static int toWin32KeyCode(KeyCode keyCode);
+    // Get VKey from a Win32 RAWKEYBOARD with differentiated left and right
+    // modifier keys (e.g. VK_LSHIFT and VK_RSHIFT instead of VK_SHIFT)
+    static UINT extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard);
+
+    // Convert a Win32 virtual key code to esd::window key code
+    static KeyCode fromWin32KeyCode(UINT win32KeyCode);
+
+    // Convert an esd::window key code to Win32 virtual key code
+    static UINT toWin32KeyCode(KeyCode keyCode);
 
     // Win32 WNDPROC
     static LRESULT CALLBACK wndProc(
         HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     );
-    
-    static RECT createWindowRect(Size size);
+
+    // Win32 HOOKPROC
+    static LRESULT CALLBACK lowLevelKeyboardProc(
+        int nCode, WPARAM wParam, LPARAM lParam
+    );
 };
 
 Window::Window(std::string title, Size size) {
@@ -64,6 +78,18 @@ Window::Window(std::string title, Size size) {
 
     SetWindowLongPtrA(impl->hWnd, GWLP_USERDATA, (LONG_PTR)this);
     ShowWindow(impl->hWnd, SW_SHOW);
+
+    // Register raw input devices
+
+    // Usage Reference:
+    // https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
+
+    RAWINPUTDEVICE rid[] = {
+        { 0x01, 0x06, NULL, impl->hWnd }, // Keyboard
+        { 0x01, 0x07, NULL, impl->hWnd }, // Keypad (Numpad)
+    };
+
+    RegisterRawInputDevices(rid, sizeof(rid) / sizeof(rid[0]), sizeof(rid[0]));
 }
 
 Window::~Window() {
@@ -99,61 +125,8 @@ bool Window::isCloseRequested() {
     return impl->closeRequested;
 }
 
-// TODO: improve key mapping performance
-int Window::Impl::toWin32KeyCode(KeyCode keyCode) {
-    for (const auto& it : keyCodeMappings)
-        if (it.second == keyCode) return it.first;
-    return NULL;
-}
-
-// TODO: improve key mapping performance
-KeyCode Window::Impl::fromWin32KeyCode(WPARAM wParam, LPARAM lParam) {
-
-    // Differentiate left and right modifier keys
-    bool extended = lParam & 0x01000000;
-    switch (wParam) {
-    case VK_SHIFT:
-        wParam = 
-            MapVirtualKeyA((lParam & 0x00ff0000) >> 16, MAPVK_VSC_TO_VK_EX);
-        break;
-    case VK_CONTROL:
-        wParam = extended ? VK_RCONTROL : VK_LCONTROL;
-        break;
-    case VK_MENU:
-        wParam = extended ? VK_RMENU : VK_LMENU;
-        break;
-    }
-
-    try {
-        return keyCodeMappings.at((int)wParam);
-    } catch (std::out_of_range&) {
-        return KeyCode::Unknown;
-    }
-}
-
-LRESULT CALLBACK Window::Impl::wndProc(
-    HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
-) {
-    auto window = (Window*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-
-    switch (uMsg) {
-    case WM_CLOSE:
-        window->impl->closeRequested = true;
-        return NULL;
-    case WM_KEYDOWN:
-    case WM_SYSKEYDOWN:
-    case WM_KEYUP:
-    case WM_SYSKEYUP:
-        {
-            KeyEvent event;
-            event.down = !(HIWORD(lParam) & KF_UP);
-            event.keyCode = fromWin32KeyCode(wParam, lParam);
-            if (window->keyHandler) window->keyHandler(event);
-        }
-        return NULL;
-    }
-
-    return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+void Window::setCloseRequested(bool closeRequested) {
+    impl->closeRequested = closeRequested;
 }
 
 RECT Window::Impl::createWindowRect(Size size) {
@@ -164,4 +137,90 @@ RECT Window::Impl::createWindowRect(Size size) {
     rect.bottom = size.height;
     AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW ^ WS_OVERLAPPED, FALSE, NULL);
     return rect;
+}
+
+// TODO: improve key mapping performance
+// Probably use two arrays instead of a map, barely any more memory, faster
+// mapping
+UINT Window::Impl::toWin32KeyCode(KeyCode keyCode) {
+    for (const auto& it : keyCodeMappings)
+        if (it.second == keyCode) return it.first;
+    return NULL;
+}
+
+UINT Window::Impl::extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard) {
+    // Differentiate left and right modifier keys
+    bool extended = rawKeyboard.Flags & RI_KEY_E0;
+    switch (rawKeyboard.VKey) {
+    case VK_SHIFT:
+        return MapVirtualKeyA(rawKeyboard.MakeCode, MAPVK_VSC_TO_VK_EX);
+    case VK_CONTROL:
+        return extended ? VK_RCONTROL : VK_LCONTROL;
+    case VK_MENU:
+        return extended ? VK_RMENU : VK_LMENU;
+    default:
+        return rawKeyboard.VKey;
+    }
+}
+
+// TODO: improve key mapping performance
+KeyCode Window::Impl::fromWin32KeyCode(UINT win32KeyCode) {
+    auto it = keyCodeMappings.find((int)win32KeyCode);
+    return it == keyCodeMappings.end() ? KeyCode::Unknown : it->second;
+}
+
+LRESULT CALLBACK Window::Impl::wndProc(
+    HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
+) {
+    auto window = (Window*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+
+    switch (uMsg) {
+    case WM_CLOSE:
+        // Signal close request
+        window->impl->closeRequested = true;
+
+        // Override default close behavior
+        return NULL;
+    case WM_CHAR:
+        {
+            if (window->keyCharHandler) window->keyCharHandler((char)wParam);
+        }
+        break;
+    case WM_INPUT:
+        {
+            RAWINPUT rawInput;
+            UINT rawInputSize = sizeof(rawInput);
+
+            GetRawInputData(
+                (HRAWINPUT)lParam, 
+                RID_INPUT, 
+                &rawInput, 
+                &rawInputSize, 
+                sizeof(RAWINPUTHEADER)
+            );
+
+            // Key pressed / released
+            if (rawInput.header.dwType == RIM_TYPEKEYBOARD) {
+
+                // Skip unmapped keys
+                if (rawInput.data.keyboard.VKey == 0xFF) break;
+                
+                KeyEvent event;
+                event.down = !(rawInput.data.keyboard.Flags & RI_KEY_BREAK);
+                event.keyCode = fromWin32KeyCode(
+                    extractDiffWin32KeyCode(rawInput.data.keyboard)
+                );
+                if (window->keyHandler) window->keyHandler(event);
+            }
+        }
+        break;
+    }
+
+    return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT CALLBACK Window::Impl::lowLevelKeyboardProc(
+    int nCode, WPARAM wParam, LPARAM lParam
+) {
+    return nCode;
 }

@@ -6,7 +6,7 @@
 
 namespace esd::window {
 
-const std::map<int, KeyCode> keyCodeMappings = {
+const std::map<UINT, KeyCode> keyCodeMappings = {
     { 0x30, KeyCode::Num0 },
     { 0x31, KeyCode::Num1 },
     { 0x32, KeyCode::Num2 },
@@ -69,6 +69,7 @@ const std::map<int, KeyCode> keyCodeMappings = {
     { VK_SNAPSHOT, KeyCode::PrintScreen },
     { VK_INSERT, KeyCode::Insert },
     { VK_DELETE, KeyCode::Delete },
+    { VK_APPS, KeyCode::Menu },
     { VK_LWIN, KeyCode::LMeta },
     { VK_RWIN, KeyCode::RMeta },
     { VK_NUMPAD0, KeyCode::Numpad0 },
@@ -122,7 +123,7 @@ const std::map<int, KeyCode> keyCodeMappings = {
     { VK_OEM_4, KeyCode::LBracket },
     { VK_OEM_5, KeyCode::Backslash },
     { VK_OEM_6, KeyCode::RBracket },
-    { VK_OEM_7, KeyCode::Quote },
+    { VK_OEM_7, KeyCode::Apostrophe },
 };
 
 }
