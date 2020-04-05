@@ -69,7 +69,7 @@ const std::map<int, KeyCode> keyCodeMappings = {
     { VK_SNAPSHOT, KeyCode::PrintScreen },
     { VK_INSERT, KeyCode::Insert },
     { VK_DELETE, KeyCode::Delete },
-    { VK_APPS, KeyCode::LMeta },
+    { VK_LWIN, KeyCode::LMeta },
     { VK_RWIN, KeyCode::RMeta },
     { VK_NUMPAD0, KeyCode::Numpad0 },
     { VK_NUMPAD1, KeyCode::Numpad1 },
