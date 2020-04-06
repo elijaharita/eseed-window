@@ -105,7 +105,9 @@ void Window::poll() {
 }
 
 Size Window::getSize() {
-    return { 1, 1 };
+    RECT rect; 
+    GetClientRect(impl->hWnd, &rect);
+    return Size { rect.right - rect.left, rect.bottom - rect.top };
 }
 
 // TODO: retain window position

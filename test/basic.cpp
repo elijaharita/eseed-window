@@ -19,7 +19,7 @@ int main() {
         }
     };
 
-    window.keyCharHandler = [&](char c) {
+    window.keyCharHandler = [](char c) {
         std::cout << c;
     };
 
