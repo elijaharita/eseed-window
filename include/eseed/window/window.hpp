@@ -32,9 +32,14 @@ public:
     // Poll for window events
     void poll();
 
-    // Get window size
+    // Get window title text
+    std::string getTitle();
+    // Set window title text
+    void setTitle(std::string title);
+
+    // Get window pixel size
     Size getSize();
-    // Set window size
+    // Set window pixel size
     void setSize(const Size& size);
 
     // Check whether the window close button has been pressed

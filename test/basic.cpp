@@ -7,6 +7,8 @@
 using esd::window::KeyCode;
 
 int main() {
+    std::string title;
+    
     esd::window::Window window("A Window", { 1366, 768 });
     
     window.keyHandler = [&](esd::window::KeyEvent e) {
@@ -19,8 +21,11 @@ int main() {
         }
     };
 
-    window.keyCharHandler = [](char c) {
-        std::cout << c;
+    window.keyCharHandler = [&](char c) {
+        std::string title = window.getTitle();
+        if (c == 0x08) title = title.substr(0, title.length() - 1);
+        else title += c;
+        window.setTitle(title);
     };
 
     float t = 0;

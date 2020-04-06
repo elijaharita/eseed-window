@@ -104,6 +104,28 @@ void Window::poll() {
     }
 }
 
+std::string Window::getTitle() {
+    // Title strings above this length will require a memory allocation
+    constexpr int dynamicTitleMinLength = 256;
+
+    int length = GetWindowTextLengthA(impl->hWnd);
+    if (length < dynamicTitleMinLength) {
+        char data[dynamicTitleMinLength];
+        GetWindowTextA(impl->hWnd, data, dynamicTitleMinLength);
+        return std::string(data);
+    } else {
+        char* data = new char[length];
+        GetWindowTextA(impl->hWnd, data, length);
+        std::string title(data);
+        delete[] data;
+        return title;
+    }
+}
+
+void Window::setTitle(std::string title) {
+    SetWindowTextA(impl->hWnd, title.c_str());
+}
+
 Size Window::getSize() {
     RECT rect; 
     GetClientRect(impl->hWnd, &rect);
