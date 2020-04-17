@@ -55,10 +55,14 @@ vk::ShaderModule loadShaderModule(vk::Device device, std::string path) {
 int main() {
     esd::wnd::VulkanWindow window("ウィンドウ", { 1366, 768 });
 
-    // Add a handler to request window close when Escape pressed
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
+        // Close window when Escape is pressed
         if (e.keyCode == KeyCode::Esc)
             window.setCloseRequested(true);
+
+        // Toggle fullscreen when F11 is pressed
+        if (e.keyCode == KeyCode::F11)
+            window.setFullscreen(!window.isFullscreen());
     };
 
     // CREATE INSTANCE
@@ -140,8 +144,8 @@ int main() {
             .setImageArrayLayers(1)
             .setImageColorSpace(surfaceFormat.colorSpace)
             .setImageExtent({ 
-                (uint32_t)window.getSize().width, 
-                (uint32_t)window.getSize().height 
+                (uint32_t)window.getSize().w, 
+                (uint32_t)window.getSize().h 
             })
             .setImageFormat(surfaceFormat.format)
             .setImageSharingMode(vk::SharingMode::eExclusive)
@@ -265,14 +269,14 @@ int main() {
                 .setScissorCount(1)
                 .setPScissors(&vk::Rect2D()
                     .setExtent({
-                        (uint32_t)window.getSize().width, 
-                        (uint32_t)window.getSize().height 
+                        (uint32_t)window.getSize().w, 
+                        (uint32_t)window.getSize().h 
                     })
                 )
                 .setViewportCount(1)
                 .setPViewports(&vk::Viewport()
-                    .setWidth((float)window.getSize().width)
-                    .setHeight((float)window.getSize().height)
+                    .setWidth((float)window.getSize().w)
+                    .setHeight((float)window.getSize().h)
                     .setMinDepth(0)
                     .setMaxDepth(1)
                 )
@@ -314,8 +318,8 @@ int main() {
             vk::FramebufferCreateInfo()
                 .setAttachmentCount(1)
                 .setPAttachments(&swapchainImageViews[i])
-                .setWidth(window.getSize().width)
-                .setHeight(window.getSize().height)
+                .setWidth(window.getSize().w)
+                .setHeight(window.getSize().h)
                 .setLayers(1)
                 .setRenderPass(renderPass)
         );
@@ -347,8 +351,8 @@ int main() {
                 )
                 .setRenderArea(vk::Rect2D()
                     .setExtent({ 
-                        (uint32_t)window.getSize().width, 
-                        (uint32_t)window.getSize().height 
+                        (uint32_t)window.getSize().w, 
+                        (uint32_t)window.getSize().h 
                     })
                 )
                 .setRenderPass(renderPass)

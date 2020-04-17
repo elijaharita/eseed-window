@@ -33,12 +33,15 @@ endif()
 
 if(ESD_WND_BUILD_EXAMPLES)
 
-    # Basic Test
+    # Basic Input
     add_subdirectory(examples/basicinput)
+
+    # Sizing
+    add_subdirectory(examples/dimensions)
 
     if(ESD_WND_ENABLE_VULKAN_SUPPORT)
 
-        # Vulkan Test
+        # Vulkan Support
         add_subdirectory(examples/vulkan)
         
     endif()

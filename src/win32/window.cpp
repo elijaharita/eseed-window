@@ -43,17 +43,21 @@ Window::Window(std::string title, Size size) {
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.lpszClassName = className;
     wc.lpfnWndProc = (WNDPROC)Impl::wndProc;
-    wc.cbWndExtra = sizeof(Window*);
+    wc.cbWndExtra = sizeof(this);
     RegisterClassExW(&wc);
 
-    RECT rect = Impl::createWindowRect(size);
+    // TODO: tmp
+    std::optional<Pos> pos;
+
+    RECT rect = impl->createWindowRect(size, *pos);
     impl->hWnd = CreateWindowExW(
         NULL,
         className,
         Impl::stringToWideString(title).c_str(),
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
+        // Use automatic Win32 window placement if no position provided
+        pos ? rect.left : CW_USEDEFAULT,
+        pos ? rect.top : CW_USEDEFAULT,
         rect.right - rect.left,
         rect.bottom - rect.top,
         NULL,
@@ -116,13 +120,43 @@ Size Window::getSize() {
     return Size { rect.right - rect.left, rect.bottom - rect.top };
 }
 
-// TODO: retain window position
 void Window::setSize(const Size& size) {
-    RECT rect = Impl::createWindowRect(size);
+
+    if (isFullscreen()) return;
+    
+    RECT rect = impl->createWindowRect(size, getPos());
+
+    int diffX = size.w - rect.right - rect.left;
+    int diffY = size.h - rect.bottom - rect.top;
+
     SetWindowPos(
-        impl->hWnd, HWND_TOP,
-        0,
-        0,
+        impl->hWnd, 
+        NULL,
+        rect.left,
+        rect.top,
+        rect.right - rect.left,
+        rect.bottom - rect.top,
+        NULL
+    );
+}
+
+Pos Window::getPos() {
+    RECT rect = { 0, 0 };
+    ClientToScreen(impl->hWnd, (POINT*)&rect);
+    return { rect.left, rect.top };
+}
+
+void Window::setPos(const Pos& pos) {
+    
+    if (isFullscreen()) return;
+
+    RECT rect = impl->createWindowRect(getSize(), pos);
+    
+    SetWindowPos(
+        impl->hWnd, 
+        NULL,
+        rect.left,
+        rect.top,
         rect.right - rect.left,
         rect.bottom - rect.top,
         NULL
@@ -137,13 +171,67 @@ void Window::setCloseRequested(bool closeRequested) {
     impl->closeRequested = closeRequested;
 }
 
-RECT Window::Impl::createWindowRect(Size size) {
+bool Window::isFullscreen() {
+    // Fullscreen won't have overlapped window style
+    return !(GetWindowLong(impl->hWnd, GWL_STYLE) & WS_OVERLAPPEDWINDOW);
+}
+
+void Window::setFullscreen(bool fullscreen) {
+
+    if (fullscreen) {
+        MONITORINFO mi = { sizeof(mi) };
+        GetMonitorInfo(
+            MonitorFromWindow(impl->hWnd, MONITOR_DEFAULTTOPRIMARY), &mi
+        );
+
+        // Remove overlapped window style
+        DWORD style = GetWindowLong(impl->hWnd, GWL_STYLE);
+        SetWindowLong(impl->hWnd, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+
+        GetWindowPlacement(impl->hWnd, &impl->windowedPlacement);
+
+        // Make window cover full monitor screen
+        SetWindowPos(
+            impl->hWnd, 
+            HWND_TOP, 
+            mi.rcMonitor.left,
+            mi.rcMonitor.top,
+            mi.rcMonitor.right - mi.rcMonitor.left,
+            mi.rcMonitor.bottom - mi.rcMonitor.top,
+            SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+        );
+    } else {
+
+        // Add back overlapped window style
+        DWORD style = GetWindowLong(impl->hWnd, GWL_STYLE);
+        SetWindowLong(impl->hWnd, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+        
+        SetWindowPlacement(impl->hWnd, &impl->windowedPlacement);
+        
+        // Reapply stored dimensions
+        SetWindowPos(
+            impl->hWnd,
+            NULL,
+            0, 0, 0, 0,
+            SWP_NOMOVE
+                | SWP_NOSIZE
+                | SWP_NOZORDER
+                | SWP_NOOWNERZORDER
+                | SWP_FRAMECHANGED
+        );
+    }
+
+    InvalidateRect(impl->hWnd, NULL, TRUE);
+}
+
+RECT Window::Impl::createWindowRect(Size size, Pos pos) {
     RECT rect;
-    rect.left = 0;
-    rect.top = 0;
-    rect.right = size.width;
-    rect.bottom = size.height;
-    AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW ^ WS_OVERLAPPED, FALSE, NULL);
+    rect.left = pos.x;
+    rect.top = pos.y;
+    rect.right = pos.x + size.w;
+    rect.bottom = pos.y + size.h;
+    DWORD style = GetWindowLong(hWnd, GWL_STYLE);
+    AdjustWindowRectEx(&rect, style ^ WS_OVERLAPPED, FALSE, NULL);
     return rect;
 }
 
@@ -222,6 +310,14 @@ LRESULT CALLBACK Window::Impl::wndProc(
             }
         }
         break;
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hWnd, &ps);
+            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+            EndPaint(hWnd, &ps);
+        }
+        return 0;
     }
 
     return DefWindowProcW(hWnd, uMsg, wParam, lParam);

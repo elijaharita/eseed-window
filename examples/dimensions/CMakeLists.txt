@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(eseed_window_example_dimensions)
+
+add_executable(eseed_window_example_dimensions dimensions.cpp)
+target_link_libraries(eseed_window_example_dimensions eseed_window)

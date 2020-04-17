@@ -29,7 +29,7 @@
 namespace esd::wnd {
 
 struct Size {
-    int width, height;
+    int w, h;
 };
 
 struct Pos {
@@ -52,20 +52,22 @@ public:
     // Poll for window events
     void poll();
 
-    // Get window title text
     std::string getTitle();
-    // Set window title text
     void setTitle(std::string title);
 
-    // Get window pixel size
     Size getSize();
-    // Set window pixel size
     void setSize(const Size& size);
+
+    Pos getPos();
+    void setPos(const Pos& pos);
 
     // Check whether the window close button has been pressed
     bool isCloseRequested();
     // Simulate window close button click
     void setCloseRequested(bool closeRequested);
+
+    bool isFullscreen();
+    void setFullscreen(bool fullscreen);
 
 protected:
     // Should be defined in the platform-specific source file with data members

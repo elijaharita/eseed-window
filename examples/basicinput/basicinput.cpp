@@ -35,8 +35,6 @@ int main() {
 
         std::string title = window.getTitle();
 
-        std::cout << title << std::endl;
-
         // If the ASCII code is BS (backspace), specially remove a character
         if (c == 0x08) title = title.substr(0, title.length() - 1);
 

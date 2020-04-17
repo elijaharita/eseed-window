@@ -20,11 +20,14 @@ Hello everyone. This project was originally designed as a part of my game engine
     - Char input callback
 - Title management
 - Size and position management
+- Fullscreen
 - Currently NOT thread safe
 
 ### Planned
 - More platform support
   - Mac, Wayland, X, etc. (needs a lot more research on my part, contributions appreciated)
+  - More Windows support
+    - IME input
 - More rendering API support
   - OpenGL context management
   - Possibly others

@@ -27,11 +27,12 @@ class esd::wnd::Window::Impl {
 public:
     HINSTANCE hInstance;
     HWND hWnd;
+    WINDOWPLACEMENT windowedPlacement;
     bool closeRequested;
     
     // Create a Win32 RECT adjusted for the window style based on an
     // esd::wnd Size
-    static RECT createWindowRect(Size size);
+    RECT createWindowRect(Size size, Pos pos = {});
 
     // Get VKey from a Win32 RAWKEYBOARD with differentiated left and right
     // modifier keys (e.g. VK_LSHIFT and VK_RSHIFT instead of VK_SHIFT)
