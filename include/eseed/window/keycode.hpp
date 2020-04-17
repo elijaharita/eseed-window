@@ -183,9 +183,10 @@ enum struct KeyCode {
     F23,
     F24,
     NumLock,
-    NumLk = NumLock,
+        NumLk = NumLock,
     ScrollLock,
-    ScrLk = ScrollLock,
+        ScrLk = ScrollLock,
+    LastKey = ScrollLock
 };
 
 }

@@ -19,6 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 // SOFTWARE.
 
+#include <iostream>
 #include <thread>
 
 int main() {
@@ -75,7 +76,7 @@ int main() {
     };
 
     while (!window.isCloseRequested()) {
-        // Sleep for a sixtieth of a second so cpu doesn't explode :)
+        // Sleep for a sixtieth of a second so cpu doesn't evaporate :)
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
 
         window.poll();

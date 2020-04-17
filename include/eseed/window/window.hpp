@@ -56,18 +56,28 @@ public:
     void setTitle(std::string title);
 
     Size getSize();
-    void setSize(const Size& size);
+    void setSize(Size size);
 
     Pos getPos();
-    void setPos(const Pos& pos);
+    void setPos(Pos pos);
 
-    // Check whether the window close button has been pressed
     bool isCloseRequested();
-    // Simulate window close button click
     void setCloseRequested(bool closeRequested);
 
     bool isFullscreen();
     void setFullscreen(bool fullscreen);
+
+    bool isKeyDown(KeyCode keyCode);
+
+    // Get toggle state of applicable keys like caps lock or num lock
+    // Always returns false for non-toggleable keys
+    bool isKeyToggled(KeyCode keyCode);
+
+    Pos getCursorPos();
+    void setCursorPos(Pos pos);
+
+    Pos getCursorScreenPos();
+    void setCursorScreenPos(Pos pos);
 
 protected:
     // Should be defined in the platform-specific source file with data members

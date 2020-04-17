@@ -120,7 +120,7 @@ Size Window::getSize() {
     return Size { rect.right - rect.left, rect.bottom - rect.top };
 }
 
-void Window::setSize(const Size& size) {
+void Window::setSize(Size size) {
 
     if (isFullscreen()) return;
     
@@ -146,7 +146,7 @@ Pos Window::getPos() {
     return { rect.left, rect.top };
 }
 
-void Window::setPos(const Pos& pos) {
+void Window::setPos(Pos pos) {
     
     if (isFullscreen()) return;
 
@@ -224,14 +224,46 @@ void Window::setFullscreen(bool fullscreen) {
     InvalidateRect(impl->hWnd, NULL, TRUE);
 }
 
+bool Window::isKeyDown(KeyCode keyCode) {
+    for (auto it : keyCodeMappings) {
+        if (it.second == keyCode) {
+            return GetKeyState(it.first) & 0x8000;
+        }
+    }
+    throw std::runtime_error("Unknown key");
+}
+
+Pos Window::getCursorPos() {
+    POINT point;
+    GetCursorPos(&point);
+    ScreenToClient(impl->hWnd, &point);
+    return Pos { point.x, point.y };
+}
+
+void Window::setCursorPos(Pos pos) {
+    POINT point = { pos.x, pos.y };
+    ClientToScreen(impl->hWnd, &point);
+    SetCursorPos(point.x, point.y);
+}
+
+Pos Window::getCursorScreenPos() {
+    POINT point;
+    GetCursorPos(&point);
+    return Pos { point.x, point.y };
+}
+
+void Window::setCursorScreenPos(Pos pos) {
+    SetCursorPos(pos.x, pos.y);
+}
+
 RECT Window::Impl::createWindowRect(Size size, Pos pos) {
     RECT rect;
     rect.left = pos.x;
     rect.top = pos.y;
     rect.right = pos.x + size.w;
     rect.bottom = pos.y + size.h;
-    DWORD style = GetWindowLong(hWnd, GWL_STYLE);
-    AdjustWindowRectEx(&rect, style ^ WS_OVERLAPPED, FALSE, NULL);
+    // TODO: remove hard-coded style parameter
+    AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW ^ WS_OVERLAPPED, FALSE, NULL);
     return rect;
 }
 

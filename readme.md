@@ -18,10 +18,14 @@ Hello everyone. This project was originally designed as a part of my game engine
     - Key callback
       - Applicable key codes are mapped to their ASCII analogs
     - Char input callback
+    - Key state getter
+  - Mouse
+    - Mouse position getter and setter
+    - Mouse screen position getter and setter
 - Title management
 - Size and position management
 - Fullscreen
-- Currently NOT thread safe
+- Thread safety
 
 ### Planned
 - More platform support
