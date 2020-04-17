@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(eseed_window_example_vulkan)
+
+add_executable(eseed_window_example_vulkan vulkan.cpp)
+target_link_libraries(eseed_window_example_vulkan Vulkan::Vulkan eseed_window)

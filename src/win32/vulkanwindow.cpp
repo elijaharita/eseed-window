@@ -18,60 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 // SOFTWARE.
 
-#pragma once
+#ifndef VK_USE_PLATFORM_WIN32_KHR
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
 
-#include <eseed/window/keycode.hpp>
-#include <string>
-#include <memory>
-#include <functional>
-#include <optional>
+#include "impl.hpp"
+#include <eseed/window/vulkanwindow.hpp>
 
-namespace esd::wnd {
+using namespace esd::wnd;
 
-struct Size {
-    int width, height;
-};
+std::vector<const char*> VulkanWindow::getRequiredSurfaceInstanceExtensions() {
+    return {
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+    };
+}
 
-struct Pos {
-    int x, y;
-};
+#ifdef VULKAN_HPP
+vk::SurfaceKHR VulkanWindow::createSurface(const vk::Instance& instance) {
+    return instance.createWin32SurfaceKHR(vk::Win32SurfaceCreateInfoKHR()
+        .setHwnd(impl->hWnd)
+        .setHinstance(impl->hInstance)
+    );
+}
+#endif
 
-struct KeyEvent {
-    KeyCode keyCode;
-    bool down;
-};
+VkSurfaceKHR VulkanWindow::createSurface(const VkInstance& instance) {
+    VkWin32SurfaceCreateInfoKHR ci = {};
+    ci.hwnd = impl->hWnd;
+    ci.hinstance = impl->hInstance;
+    
+    VkSurfaceKHR surface;
+    vkCreateWin32SurfaceKHR(instance, &ci, nullptr, &surface);
 
-class Window {
-public:
-    std::function<void(KeyEvent)> keyHandler;
-    std::function<void(char32_t)> keyCharHandler;
-
-    Window(std::string title, Size size);
-    ~Window();
-
-    // Poll for window events
-    void poll();
-
-    // Get window title text
-    std::string getTitle();
-    // Set window title text
-    void setTitle(std::string title);
-
-    // Get window pixel size
-    Size getSize();
-    // Set window pixel size
-    void setSize(const Size& size);
-
-    // Check whether the window close button has been pressed
-    bool isCloseRequested();
-    // Simulate window close button click
-    void setCloseRequested(bool closeRequested);
-
-protected:
-    // Should be defined in the platform-specific source file with data members
-    // and additional functions
-    class Impl;
-    std::unique_ptr<Impl> impl;
-};
-
+    return surface;
 }

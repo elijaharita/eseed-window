@@ -1,52 +1,42 @@
+// Copyright (c) 2020 Elijah Seed Arita
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy 
+// of this software and associated documentation files (the "Software"), to deal 
+// in the Software without restriction, including without limitation the rights 
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+// copies of the Software, and to permit persons to whom the Software is 
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in 
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+// SOFTWARE.
+
 #include <eseed/window/window.hpp>
 
 #include "keycodemappings.hpp"
+#include "impl.hpp"
 #include <Windows.h>
 #include <iostream>
 #include <set>
 
-using namespace esd::window;
-
-class Window::Impl {
-public:
-    HINSTANCE hInstance;
-    HWND hWnd;
-    bool closeRequested;
-    
-    // Create a Win32 RECT adjusted for the window style based on an
-    // eseed::window Size
-    static RECT createWindowRect(Size size);
-
-    // Get VKey from a Win32 RAWKEYBOARD with differentiated left and right
-    // modifier keys (e.g. VK_LSHIFT and VK_RSHIFT instead of VK_SHIFT)
-    static UINT extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard);
-
-    // Convert a Win32 virtual key code to esd::window key code
-    static KeyCode fromWin32KeyCode(UINT win32KeyCode);
-
-    // Convert an esd::window key code to Win32 virtual key code
-    static UINT toWin32KeyCode(KeyCode keyCode);
-
-    // Win32 WNDPROC
-    static LRESULT CALLBACK wndProc(
-        HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
-    );
-
-    // Win32 HOOKPROC
-    static LRESULT CALLBACK lowLevelKeyboardProc(
-        int nCode, WPARAM wParam, LPARAM lParam
-    );
-};
+using namespace esd::wnd;
 
 Window::Window(std::string title, Size size) {
 
     impl = std::make_unique<Impl>();
 
-    impl->hInstance = GetModuleHandleA(NULL);
+    impl->hInstance = GetModuleHandleW(NULL);
     
-    constexpr char className[] = "ESeed Window";
+    constexpr wchar_t className[] = L"ESeed Window";
     
-    WNDCLASSEXA wc = {};
+    WNDCLASSEXW wc = {};
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.hInstance = impl->hInstance;
     wc.hIcon = NULL;
@@ -54,14 +44,13 @@ Window::Window(std::string title, Size size) {
     wc.lpszClassName = className;
     wc.lpfnWndProc = (WNDPROC)Impl::wndProc;
     wc.cbWndExtra = sizeof(Window*);
-    RegisterClassExA(&wc);
-
+    RegisterClassExW(&wc);
 
     RECT rect = Impl::createWindowRect(size);
-    impl->hWnd = CreateWindowExA(
+    impl->hWnd = CreateWindowExW(
         NULL,
         className,
-        title.c_str(),
+        Impl::stringToWideString(title).c_str(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -73,10 +62,13 @@ Window::Window(std::string title, Size size) {
         NULL
     );
 
+    // Window is null if failed to initialize
     if (impl->hWnd == NULL)
         throw std::runtime_error("Failed to create native Win32 window");
 
-    SetWindowLongPtrA(impl->hWnd, GWLP_USERDATA, (LONG_PTR)this);
+    // Set "this" pointer in window user data for use in WNDPROC
+    SetWindowLongPtrW(impl->hWnd, GWLP_USERDATA, (LONG_PTR)this);
+
     ShowWindow(impl->hWnd, SW_SHOW);
 
     // Register raw input devices
@@ -98,32 +90,37 @@ Window::~Window() {
 
 void Window::poll() {
     MSG msg;
-    while (PeekMessageA(&msg, impl->hWnd, 0, 0, PM_REMOVE)) {
+    while (PeekMessageW(&msg, impl->hWnd, 0, 0, PM_REMOVE)) {
         TranslateMessage(&msg);
-        DispatchMessageA(&msg);
+        DispatchMessageW(&msg);
     }
 }
 
 std::string Window::getTitle() {
-    // Title strings above this length will require a memory allocation
-    constexpr int dynamicTitleMinLength = 256;
 
-    int length = GetWindowTextLengthA(impl->hWnd);
-    if (length < dynamicTitleMinLength) {
-        char data[dynamicTitleMinLength];
-        GetWindowTextA(impl->hWnd, data, dynamicTitleMinLength);
-        return std::string(data);
-    } else {
-        char* data = new char[length];
-        GetWindowTextA(impl->hWnd, data, length);
-        std::string title(data);
-        delete[] data;
-        return title;
-    }
+    int length = GetWindowTextLengthW(impl->hWnd);
+
+    std::wstring wtitle = std::wstring(length, 0);
+    GetWindowTextW(impl->hWnd, (LPWSTR)wtitle.c_str(), length);
+
+    return Impl::wideStringToString(wtitle);
 }
 
 void Window::setTitle(std::string title) {
-    SetWindowTextA(impl->hWnd, title.c_str());
+    wchar_t* wtitle = new wchar_t[title.length() + 1]();
+
+    MultiByteToWideChar(
+        CP_UTF8,
+        NULL,
+        title.c_str(),
+        (int)title.length(),
+        wtitle,
+        (int)title.length()
+    );
+    
+    SetWindowTextW(impl->hWnd, wtitle);
+
+    delete[] wtitle;
 }
 
 Size Window::getSize() {
@@ -177,7 +174,7 @@ UINT Window::Impl::extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard) {
     bool extended = rawKeyboard.Flags & RI_KEY_E0;
     switch (rawKeyboard.VKey) {
     case VK_SHIFT:
-        return MapVirtualKeyA(rawKeyboard.MakeCode, MAPVK_VSC_TO_VK_EX);
+        return MapVirtualKeyW(rawKeyboard.MakeCode, MAPVK_VSC_TO_VK_EX);
     case VK_CONTROL:
         return extended ? VK_RCONTROL : VK_LCONTROL;
     case VK_MENU:
@@ -204,12 +201,12 @@ LRESULT CALLBACK Window::Impl::wndProc(
         window->impl->closeRequested = true;
 
         // Override default close behavior
-        return NULL;
+        return 0;
     case WM_CHAR:
         {
-            if (window->keyCharHandler) window->keyCharHandler((char)wParam);
+            if (window->keyCharHandler) window->keyCharHandler((char32_t)wParam);
         }
-        break;
+        return 0;
     case WM_INPUT:
         {
             RAWINPUT rawInput;
@@ -240,11 +237,63 @@ LRESULT CALLBACK Window::Impl::wndProc(
         break;
     }
 
-    return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+    return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
 LRESULT CALLBACK Window::Impl::lowLevelKeyboardProc(
     int nCode, WPARAM wParam, LPARAM lParam
 ) {
     return nCode;
+}
+
+std::string Window::Impl::wideStringToString(const std::wstring& wstring) {
+    int length = WideCharToMultiByte(
+        CP_UTF8, 
+        NULL, 
+        wstring.c_str(), 
+        (int)wstring.length(), 
+        NULL, 
+        0, 
+        NULL, 
+        NULL
+    );
+
+    std::string string(length, 0);
+
+    WideCharToMultiByte(
+        CP_UTF8,
+        NULL,
+        wstring.c_str(),
+        (int)wstring.length(),
+        (LPSTR)string.c_str(),
+        (int)string.length(),
+        NULL, 
+        NULL
+    );
+
+    return string;
+}
+
+std::wstring Window::Impl::stringToWideString(const std::string& string) {
+    int wlength = MultiByteToWideChar(
+        CP_UTF8,
+        NULL,
+        string.c_str(),
+        (int)string.length(),
+        NULL,
+        0
+    );
+
+    std::wstring wstring(wlength, 0);
+
+    MultiByteToWideChar(
+        CP_UTF8,
+        NULL,
+        string.c_str(),
+        (int)string.length(),
+        (LPWSTR)wstring.c_str(),
+        (int)wstring.length()
+    );
+
+    return wstring;
 }

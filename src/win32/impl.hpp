@@ -20,58 +20,39 @@
 
 #pragma once
 
-#include <eseed/window/keycode.hpp>
-#include <string>
-#include <memory>
-#include <functional>
-#include <optional>
+#include <eseed/window/window.hpp>
+#include <Windows.h>
 
-namespace esd::wnd {
-
-struct Size {
-    int width, height;
-};
-
-struct Pos {
-    int x, y;
-};
-
-struct KeyEvent {
-    KeyCode keyCode;
-    bool down;
-};
-
-class Window {
+class esd::wnd::Window::Impl {
 public:
-    std::function<void(KeyEvent)> keyHandler;
-    std::function<void(char32_t)> keyCharHandler;
+    HINSTANCE hInstance;
+    HWND hWnd;
+    bool closeRequested;
+    
+    // Create a Win32 RECT adjusted for the window style based on an
+    // esd::wnd Size
+    static RECT createWindowRect(Size size);
 
-    Window(std::string title, Size size);
-    ~Window();
+    // Get VKey from a Win32 RAWKEYBOARD with differentiated left and right
+    // modifier keys (e.g. VK_LSHIFT and VK_RSHIFT instead of VK_SHIFT)
+    static UINT extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard);
 
-    // Poll for window events
-    void poll();
+    // Convert a Win32 virtual key code to esd::wnd key code
+    static KeyCode fromWin32KeyCode(UINT win32KeyCode);
 
-    // Get window title text
-    std::string getTitle();
-    // Set window title text
-    void setTitle(std::string title);
+    // Convert an esd::wnd key code to Win32 virtual key code
+    static UINT toWin32KeyCode(KeyCode keyCode);
 
-    // Get window pixel size
-    Size getSize();
-    // Set window pixel size
-    void setSize(const Size& size);
+    // Win32 WNDPROC
+    static LRESULT CALLBACK wndProc(
+        HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
+    );
 
-    // Check whether the window close button has been pressed
-    bool isCloseRequested();
-    // Simulate window close button click
-    void setCloseRequested(bool closeRequested);
+    // Win32 HOOKPROC
+    static LRESULT CALLBACK lowLevelKeyboardProc(
+        int nCode, WPARAM wParam, LPARAM lParam
+    );
 
-protected:
-    // Should be defined in the platform-specific source file with data members
-    // and additional functions
-    class Impl;
-    std::unique_ptr<Impl> impl;
+    static std::string wideStringToString(const std::wstring& wstring);
+    static std::wstring stringToWideString(const std::string& string);
 };
-
-}

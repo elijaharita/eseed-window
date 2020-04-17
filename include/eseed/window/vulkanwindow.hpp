@@ -20,58 +20,33 @@
 
 #pragma once
 
-#include <eseed/window/keycode.hpp>
-#include <string>
-#include <memory>
-#include <functional>
-#include <optional>
+#include <eseed/window/window.hpp>
+
+#ifdef ESD_WND_INCLUDE_VULKAN_HPP
+#include <vulkan/vulkan.hpp>
+#endif
+
+#ifdef ESD_WND_INCLUDE_VULKAN_H
+#include <vulkan/vulkan.h>
+#endif
 
 namespace esd::wnd {
 
-struct Size {
-    int width, height;
-};
-
-struct Pos {
-    int x, y;
-};
-
-struct KeyEvent {
-    KeyCode keyCode;
-    bool down;
-};
-
-class Window {
+class VulkanWindow : public Window {
 public:
-    std::function<void(KeyEvent)> keyHandler;
-    std::function<void(char32_t)> keyCharHandler;
+    VulkanWindow(std::string title, Size size) : Window(title, size) {}
 
-    Window(std::string title, Size size);
-    ~Window();
+    // Get instance extensions required to create a Vulkan surface on the
+    // current platform    
+    std::vector<const char*> getRequiredSurfaceInstanceExtensions();
 
-    // Poll for window events
-    void poll();
+// Only if the C++ bindings are included
+// (defined in vulkan/vulkan.hpp header)
+#ifdef VULKAN_HPP
+    vk::SurfaceKHR createSurface(const vk::Instance& instance);
+#endif
 
-    // Get window title text
-    std::string getTitle();
-    // Set window title text
-    void setTitle(std::string title);
-
-    // Get window pixel size
-    Size getSize();
-    // Set window pixel size
-    void setSize(const Size& size);
-
-    // Check whether the window close button has been pressed
-    bool isCloseRequested();
-    // Simulate window close button click
-    void setCloseRequested(bool closeRequested);
-
-protected:
-    // Should be defined in the platform-specific source file with data members
-    // and additional functions
-    class Impl;
-    std::unique_ptr<Impl> impl;
+    VkSurfaceKHR createSurface(const VkInstance& instance);
 };
 
 }
