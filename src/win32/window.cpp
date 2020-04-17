@@ -101,26 +101,13 @@ std::string Window::getTitle() {
     int length = GetWindowTextLengthW(impl->hWnd);
 
     std::wstring wtitle = std::wstring(length, 0);
-    GetWindowTextW(impl->hWnd, (LPWSTR)wtitle.c_str(), length);
+    GetWindowTextW(impl->hWnd, (LPWSTR)wtitle.c_str(), length + 1);
 
     return Impl::wideStringToString(wtitle);
 }
 
 void Window::setTitle(std::string title) {
-    wchar_t* wtitle = new wchar_t[title.length() + 1]();
-
-    MultiByteToWideChar(
-        CP_UTF8,
-        NULL,
-        title.c_str(),
-        (int)title.length(),
-        wtitle,
-        (int)title.length()
-    );
-    
-    SetWindowTextW(impl->hWnd, wtitle);
-
-    delete[] wtitle;
+    SetWindowTextW(impl->hWnd, Impl::stringToWideString(title).c_str());
 }
 
 Size Window::getSize() {
@@ -251,23 +238,23 @@ std::string Window::Impl::wideStringToString(const std::wstring& wstring) {
         CP_UTF8, 
         NULL, 
         wstring.c_str(), 
-        (int)wstring.length(), 
+        -1, 
         NULL, 
-        0, 
+        NULL, 
         NULL, 
         NULL
     );
 
-    std::string string(length, 0);
+    std::string string(length - 1, 0);
 
     WideCharToMultiByte(
         CP_UTF8,
         NULL,
         wstring.c_str(),
-        (int)wstring.length(),
+        -1,
         (LPSTR)string.c_str(),
-        (int)string.length(),
-        NULL, 
+        length,
+        NULL,
         NULL
     );
 
@@ -279,20 +266,20 @@ std::wstring Window::Impl::stringToWideString(const std::string& string) {
         CP_UTF8,
         NULL,
         string.c_str(),
-        (int)string.length(),
+        -1,
         NULL,
-        0
+        NULL
     );
 
-    std::wstring wstring(wlength, 0);
+    std::wstring wstring(wlength - 1, 0);
 
     MultiByteToWideChar(
         CP_UTF8,
         NULL,
         string.c_str(),
-        (int)string.length(),
+        -1,
         (LPWSTR)wstring.c_str(),
-        (int)wstring.length()
+        wlength
     );
 
     return wstring;

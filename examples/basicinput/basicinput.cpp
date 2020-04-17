@@ -28,15 +28,17 @@ int main() {
 
     // Handles interpreted character input 
     // (Shift + "1" causes "!" on US keyboard, etc.)
-    window.keyCharHandler = [&](char c) {
+    window.keyCharHandler = [&](char32_t c) {
 
         std::string title = window.getTitle();
+
+        std::cout << title << std::endl;
 
         // If the ASCII code is BS (backspace), specially remove a character
         if (c == 0x08) title = title.substr(0, title.length() - 1);
 
         // Otherwise add the character to the string
-        else title += c;
+        else title += char(c);
 
         window.setTitle(title);
     };
