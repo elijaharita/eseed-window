@@ -64,6 +64,9 @@ public:
     // Poll for window events
     void poll();
 
+    // Wait for window events
+    void waitEvents();
+
     std::string getTitle();
     void setTitle(std::string title);
 

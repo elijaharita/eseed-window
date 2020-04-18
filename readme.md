@@ -57,7 +57,7 @@ Currently, the only supported rendering API is Vulkan, and the only supported pl
 
 Windows are created with a simple constructor taking a title and size. This may be expanded with additional optional parameters in the future.
 
-After the window has been created, it needs to be polled for events continuously.
+After the window has been created, events need to be checked periodically. This can be accomplished either with `.poll()` or `.waitEvents()`. Polling immediately processes 0 or more messages, and is useful for games and other applications that have a continuously updated event loop. However, GUI applications that don't need to be updated until input is received can simply wait until one or more new events are available, and let the CPU rest in the meantime.  
 
 When the window class goes out of scope or is destroyed, the window itself will be freed and destroyed automatically.
 
@@ -73,7 +73,8 @@ int main() {
     // Event polling until window closes
     
     while (!window.isCloseRequested()) {
-        window.poll();
+        window.waitEvents();
+        // or: window.poll();
     }
 }
 ```

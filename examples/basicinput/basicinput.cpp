@@ -67,10 +67,7 @@ int main() {
 
     // Check for window updates until the close button is pressed
     while (!window.isCloseRequested()) {
-        window.poll();
-
-        // Don't scronch cpu : )
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
+        window.waitEvents();
     }
 }
 

@@ -98,6 +98,18 @@ void Window::poll() {
     }
 }
 
+void Window::waitEvents() {
+    MSG msg;
+
+    // Wait for one message
+    GetMessageW(&msg, impl->hWnd, 0, 0);
+    TranslateMessage(&msg);
+    DispatchMessageW(&msg);
+    
+    // Read any remaining buffered messages
+    poll();
+}
+
 std::string Window::getTitle() {
 
     int length = GetWindowTextLengthW(impl->hWnd);
