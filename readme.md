@@ -1,11 +1,13 @@
 # eseed window
 `namespace esd::wnd`
 
+![Example Graphic](example-graphic.jpg)
+
 ## Goal
-A cross-platform, minimal, modern window library for C++17 supporting a variety of rendering APIs (such as Vulkan, OpenGL, etc.)
+A cross-platform, minimal, modern window library for C++17. Designed to support a variety of rendering APIs. Currently includes Vulkan surface management.
 
 ## A message from me
-Hello everyone. This project was originally designed as a part of my game engine. However, I think that sharing work is pretty cool, and it's going to be a lot of work to create a cross-platform project like this by myself. So, if anyone is interested in contributing a different platform / new render API support, I'd love to work with you! In any case, I'll slowly be adding functionality myself, but it'll take a lot of research.
+Hello everyone. This project is my second library, and began as a part of my game engine. If anyone is interested in contributing a different platform / new render API support, I'd love to work with you! In any case, I'll slowly be adding functionality myself, but it'll take plenty of research :) I hope someone will find this library useful!
 
 ## Known bugs
 - Win32 window doesn't detect cursor movement outside client frame
