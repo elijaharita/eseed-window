@@ -22,7 +22,7 @@
 
 namespace esd::wnd {
 
-enum struct KeyCode {
+enum struct Key {
     Unknown = 0,
     Backspace = 8,
         Back = Backspace,

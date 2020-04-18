@@ -25,7 +25,7 @@
 #include <fstream>
 #include <iostream>
 
-using esd::wnd::KeyCode;
+using esd::wnd::Key;
 
 // Create shader module with .spv code at path
 vk::ShaderModule loadShaderModule(vk::Device device, std::string path) {
@@ -57,11 +57,11 @@ int main() {
 
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         // Close window when Escape is pressed
-        if (e.keyCode == KeyCode::Esc)
+        if (e.key == Key::Esc)
             window.setCloseRequested(true);
 
         // Toggle fullscreen when F11 is pressed
-        if (e.keyCode == KeyCode::F11)
+        if (e.key == Key::F11)
             window.setFullscreen(!window.isFullscreen());
     };
 

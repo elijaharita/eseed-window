@@ -39,10 +39,10 @@ public:
     static UINT extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard);
 
     // Convert a Win32 virtual key code to esd::wnd key code
-    static KeyCode fromWin32KeyCode(UINT win32KeyCode);
+    static Key fromWin32KeyCode(UINT win32KeyCode);
 
     // Convert an esd::wnd key code to Win32 virtual key code
-    static UINT toWin32KeyCode(KeyCode keyCode);
+    static UINT toWin32KeyCode(Key keyCode);
 
     // Win32 WNDPROC
     static LRESULT CALLBACK wndProc(

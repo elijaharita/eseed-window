@@ -28,48 +28,48 @@ int main() {
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         if (e.down) {
             // F11: Toggle fullscreen
-            if (e.keyCode == esd::wnd::KeyCode::F11) {
+            if (e.key == esd::wnd::Key::F11) {
                 window.setFullscreen(!window.isFullscreen());
             } 
             
             // Right: Move window to the right
-            else if (e.keyCode == esd::wnd::KeyCode::Right) {
+            else if (e.key == esd::wnd::Key::Right) {
                 auto pos = window.getPos();
                 window.setPos({ pos.x + 50, pos.y });
             } 
             
             // Left: Move window to the left
-            else if (e.keyCode == esd::wnd::KeyCode::Left) {
+            else if (e.key == esd::wnd::Key::Left) {
                 auto pos = window.getPos();
                 window.setPos({ pos.x - 50, pos.y });
             } 
             
             // Down: Move window down
-            else if (e.keyCode == esd::wnd::KeyCode::Down) {
+            else if (e.key == esd::wnd::Key::Down) {
                 auto pos = window.getPos();
                 window.setPos({ pos.x, pos.y + 50 });
             } 
             
             // Up: Move window up
-            else if (e.keyCode == esd::wnd::KeyCode::Up) {
+            else if (e.key == esd::wnd::Key::Up) {
                 auto pos = window.getPos();
                 window.setPos({ pos.x, pos.y - 50 });
             } 
             
             // Space: Increase size
-            else if (e.keyCode == esd::wnd::KeyCode::Space) {
+            else if (e.key == esd::wnd::Key::Space) {
                 auto size = window.getSize();
                 window.setSize({ size.w + 50, size.h + 50 });
             } 
             
             // Left Shift: Decrease size
-            else if (e.keyCode == esd::wnd::KeyCode::LShift) {
+            else if (e.key == esd::wnd::Key::LShift) {
                 auto size = window.getSize();
                 window.setSize({ size.w - 50, size.h - 50 });
             }
 
             // Escape: Close
-            else if (e.keyCode == esd::wnd::KeyCode::Escape) {
+            else if (e.key == esd::wnd::Key::Escape) {
                 window.setCloseRequested(true);
             }
         }

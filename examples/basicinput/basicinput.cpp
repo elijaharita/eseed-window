@@ -5,13 +5,16 @@
 #include <iostream>
 #include <bitset>
 
-using esd::wnd::KeyCode;
+using esd::wnd::Key;
 
 std::string codePointToUtf8(char32_t codePoint);
 
 int main() {
 
-    esd::wnd::Window window("A Window", { 1366, 768 });
+    esd::wnd::Window window("Start typing!", { 1366, 768 });
+
+    std::string cursorPosString = "";
+    std::string text = "Start typing!";
     
     // Handles raw key presses and releases
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
@@ -24,7 +27,7 @@ int main() {
             // Many keys have alternate names
             // Escape is listed as both esd::wnd::KeyCode::Esc and
             // esd::wnd::KeyCode::Escape
-            if (e.keyCode == KeyCode::Esc)
+            if (e.key == Key::Esc)
                 window.setCloseRequested(true);
         }
     };
@@ -33,18 +36,34 @@ int main() {
     // (Shift + "1" causes "!" on US keyboard, etc.)
     window.keyCharHandler = [&](char32_t c) {
 
-        std::string title = window.getTitle();
-
         // If the ASCII code is BS (backspace), specially remove a character
-        if (c == 0x08) title = title.substr(0, title.length() - 1);
+        if (c == 0x08) text = text.substr(0, text.length() - 1);
 
         // Otherwise add the character to the string
-        else title += codePointToUtf8(c);
+        else text += codePointToUtf8(c);
 
-        window.setTitle(title);
+        window.setTitle(cursorPosString + " | " + text);
     };
 
-    float t = 0;
+    // Displays the cursor window coordinates in the beginning of the title
+    window.cursorMoveHandler = [&](esd::wnd::CursorMoveEvent e) {
+        cursorPosString = "Cursor Pos: " 
+            + std::to_string(e.pos.x) 
+            + " : " 
+            + std::to_string(e.pos.y);
+
+        window.setTitle(cursorPosString + " | " + text);
+    };
+
+    // Print mouse button press and release events to the console
+    window.mouseButtonHandler = [&](esd::wnd::MouseButtonEvent e) {
+        std::cout 
+            << "Mouse button " 
+            << (int)e.button
+            << (e.down ? "pressed" : "released")
+            << " "
+            << std::endl;
+    };
 
     // Check for window updates until the close button is pressed
     while (!window.isCloseRequested()) {

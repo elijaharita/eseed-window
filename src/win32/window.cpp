@@ -23,6 +23,7 @@
 #include "keycodemappings.hpp"
 #include "impl.hpp"
 #include <Windows.h>
+#include <windowsx.h>
 #include <iostream>
 #include <set>
 
@@ -224,13 +225,20 @@ void Window::setFullscreen(bool fullscreen) {
     InvalidateRect(impl->hWnd, NULL, TRUE);
 }
 
-bool Window::isKeyDown(KeyCode keyCode) {
-    for (auto it : keyCodeMappings) {
-        if (it.second == keyCode) {
-            return GetKeyState(it.first) & 0x8000;
-        }
+bool Window::isKeyDown(Key keyCode) {
+    for (auto it : keyMappings) {
+        if (it.second == keyCode) return GetKeyState(it.first) & 0x8000;
     }
     throw std::runtime_error("Unknown key");
+}
+
+bool Window::isKeyToggled(Key key) {
+    if (key != Key::CapsLock || key != Key::NumLock || key != Key::ScrollLock) 
+        return false;
+        
+    for (auto it : keyMappings) {
+        if (it.second == key) return GetKeyState(it.first) & 0x0001;
+    }
 }
 
 Pos Window::getCursorPos() {
@@ -256,6 +264,13 @@ void Window::setCursorScreenPos(Pos pos) {
     SetCursorPos(pos.x, pos.y);
 }
 
+bool Window::isMouseButtonDown(MouseButton button) {
+    for (auto it : mouseButtonMappings) {
+        if (it.second == button) return GetKeyState(it.first) & 0x8000;
+    }
+    throw std::runtime_error("Unknown mouse button");
+}
+
 RECT Window::Impl::createWindowRect(Size size, Pos pos) {
     RECT rect;
     rect.left = pos.x;
@@ -270,8 +285,8 @@ RECT Window::Impl::createWindowRect(Size size, Pos pos) {
 // TODO: improve key mapping performance
 // Probably use two arrays instead of a map, barely any more memory, faster
 // mapping
-UINT Window::Impl::toWin32KeyCode(KeyCode keyCode) {
-    for (const auto& it : keyCodeMappings)
+UINT Window::Impl::toWin32KeyCode(Key keyCode) {
+    for (const auto& it : keyMappings)
         if (it.second == keyCode) return it.first;
     return NULL;
 }
@@ -292,9 +307,9 @@ UINT Window::Impl::extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard) {
 }
 
 // TODO: improve key mapping performance
-KeyCode Window::Impl::fromWin32KeyCode(UINT win32KeyCode) {
-    auto it = keyCodeMappings.find((int)win32KeyCode);
-    return it == keyCodeMappings.end() ? KeyCode::Unknown : it->second;
+Key Window::Impl::fromWin32KeyCode(UINT win32KeyCode) {
+    auto it = keyMappings.find((int)win32KeyCode);
+    return it == keyMappings.end() ? Key::Unknown : it->second;
 }
 
 LRESULT CALLBACK Window::Impl::wndProc(
@@ -303,17 +318,77 @@ LRESULT CALLBACK Window::Impl::wndProc(
     auto window = (Window*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
     switch (uMsg) {
+
+    // Signal close request
     case WM_CLOSE:
-        // Signal close request
         window->impl->closeRequested = true;
 
         // Override default close behavior
         return 0;
+
+    // Signal key character callback
     case WM_CHAR:
         {
-            if (window->keyCharHandler) window->keyCharHandler((char32_t)wParam);
+            if (window->keyCharHandler) 
+                window->keyCharHandler((char32_t)wParam);
         }
-        return 0;
+        break;
+
+    // Signal cursor move callback
+    // TODO: movement outside of client bounds should be detected, but isn't
+    case WM_MOUSEMOVE:
+        {
+            CursorMoveEvent event;
+
+            // Supplied coordinates are in client space
+            POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+            event.pos = { point.x, point.y };
+
+            // Convert the point to screen space and store in event
+            ClientToScreen(window->impl->hWnd, &point);
+            event.screenPos = { point.x, point.y };
+            
+            if (window->cursorMoveHandler) window->cursorMoveHandler(event);
+        }
+        break;
+
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+        if (window->mouseButtonHandler) 
+            window->mouseButtonHandler({
+                MouseButton::LButton, 
+                uMsg == WM_LBUTTONDOWN
+            });
+        break;
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        if (window->mouseButtonHandler)
+            window->mouseButtonHandler({
+                MouseButton::RButton, 
+                uMsg == WM_RBUTTONDOWN
+            });
+        break;
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+        if (window->mouseButtonHandler)
+            window->mouseButtonHandler({
+                MouseButton::MButton, 
+                uMsg == WM_MBUTTONDOWN 
+            });
+        break;
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONUP:
+        if (window->mouseButtonHandler)
+            window->mouseButtonHandler({
+                GET_XBUTTON_WPARAM(wParam) == XBUTTON1 
+                    ? MouseButton::XButton1 
+                    : MouseButton::XButton2, 
+                uMsg == WM_XBUTTONDOWN
+            }); 
+        break;
+    
+    // For intercepting events such as keyboard input that give some strange 
+    // undesired outputs using the normal window message
     case WM_INPUT:
         {
             RAWINPUT rawInput;
@@ -327,21 +402,25 @@ LRESULT CALLBACK Window::Impl::wndProc(
                 sizeof(RAWINPUTHEADER)
             );
 
-            // Key pressed / released
-            if (rawInput.header.dwType == RIM_TYPEKEYBOARD) {
-
-                // Skip unmapped keys
-                if (rawInput.data.keyboard.VKey == 0xFF) break;
-                
-                KeyEvent event;
-                event.down = !(rawInput.data.keyboard.Flags & RI_KEY_BREAK);
-                event.keyCode = fromWin32KeyCode(
-                    extractDiffWin32KeyCode(rawInput.data.keyboard)
-                );
-                if (window->keyHandler) window->keyHandler(event);
+            switch (rawInput.header.dwType) {
+            case RIM_TYPEKEYBOARD:
+                {
+                    // Skip unmapped keys
+                    if (rawInput.data.keyboard.VKey == 0xFF) break;
+                    
+                    KeyEvent event;
+                    event.down = !(rawInput.data.keyboard.Flags & RI_KEY_BREAK);
+                    event.key = fromWin32KeyCode(
+                        extractDiffWin32KeyCode(rawInput.data.keyboard)
+                    );
+                    if (window->keyHandler) window->keyHandler(event);
+                }
+                break;
             }
         }
         break;
+    
+    // Repaint the window white when it's been invalidated
     case WM_PAINT:
         {
             PAINTSTRUCT ps;

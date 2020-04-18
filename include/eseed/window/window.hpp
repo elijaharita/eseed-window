@@ -21,6 +21,7 @@
 #pragma once
 
 #include <eseed/window/keycode.hpp>
+#include <eseed/window/mousebuttoncode.hpp>
 #include <string>
 #include <memory>
 #include <functional>
@@ -37,7 +38,17 @@ struct Pos {
 };
 
 struct KeyEvent {
-    KeyCode keyCode;
+    Key key;
+    bool down;
+};
+
+struct CursorMoveEvent {
+    Pos pos;
+    Pos screenPos;
+};
+
+struct MouseButtonEvent {
+    MouseButton button;
     bool down;
 };
 
@@ -45,6 +56,8 @@ class Window {
 public:
     std::function<void(KeyEvent)> keyHandler;
     std::function<void(char32_t)> keyCharHandler;
+    std::function<void(CursorMoveEvent)> cursorMoveHandler;
+    std::function<void(MouseButtonEvent)> mouseButtonHandler;
 
     Window(std::string title, Size size);
     ~Window();
@@ -67,17 +80,19 @@ public:
     bool isFullscreen();
     void setFullscreen(bool fullscreen);
 
-    bool isKeyDown(KeyCode keyCode);
+    bool isKeyDown(Key keyCode);
 
     // Get toggle state of applicable keys like caps lock or num lock
     // Always returns false for non-toggleable keys
-    bool isKeyToggled(KeyCode keyCode);
+    bool isKeyToggled(Key keyCode);
 
     Pos getCursorPos();
     void setCursorPos(Pos pos);
 
     Pos getCursorScreenPos();
     void setCursorScreenPos(Pos pos);
+
+    bool isMouseButtonDown(MouseButton button);
 
 protected:
     // Should be defined in the platform-specific source file with data members
