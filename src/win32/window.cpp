@@ -20,7 +20,7 @@
 
 #include <eseed/window/window.hpp>
 
-#include "keycodemappings.hpp"
+#include "inputmappings.hpp"
 #include "impl.hpp"
 #include <Windows.h>
 #include <windowsx.h>
@@ -29,7 +29,7 @@
 
 using namespace esd::wnd;
 
-Window::Window(std::string title, Size size) {
+Window::Window(std::string title, Size size, std::optional<Pos> pos) {
 
     impl = std::make_unique<Impl>();
 
@@ -46,9 +46,6 @@ Window::Window(std::string title, Size size) {
     wc.lpfnWndProc = (WNDPROC)Impl::wndProc;
     wc.cbWndExtra = sizeof(this);
     RegisterClassExW(&wc);
-
-    // TODO: tmp
-    std::optional<Pos> pos;
 
     RECT rect = impl->createWindowRect(size, *pos);
     impl->hWnd = CreateWindowExW(

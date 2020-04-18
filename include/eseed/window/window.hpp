@@ -20,8 +20,7 @@
 
 #pragma once
 
-#include <eseed/window/keycode.hpp>
-#include <eseed/window/mousebuttoncode.hpp>
+#include <eseed/window/input.hpp>
 #include <string>
 #include <memory>
 #include <functional>
@@ -59,7 +58,7 @@ public:
     std::function<void(CursorMoveEvent)> cursorMoveHandler;
     std::function<void(MouseButtonEvent)> mouseButtonHandler;
 
-    Window(std::string title, Size size);
+    Window(std::string title, Size size, std::optional<Pos> pos = std::nullopt);
     ~Window();
 
     // Poll for window events

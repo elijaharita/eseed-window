@@ -20,12 +20,19 @@
 
 #pragma once
 
-#include <eseed/window/keycode.hpp>
-#include <eseed/window/mousebuttoncode.hpp>
+#include <eseed/window/input.hpp>
 #include <windows.h>
 #include <map>
 
 namespace esd::wnd {
+
+const std::map<UINT, MouseButton> mouseButtonMappings = {
+    { VK_LBUTTON, MouseButton::LButton },
+    { VK_RBUTTON, MouseButton::RButton },
+    { VK_MBUTTON, MouseButton::MButton },
+    { VK_XBUTTON1, MouseButton::XButton1 },
+    { VK_XBUTTON2, MouseButton::XButton2 }
+};
 
 const std::map<UINT, Key> keyMappings = {
     { 0x30, Key::Num0 },
@@ -145,14 +152,6 @@ const std::map<UINT, Key> keyMappings = {
     { VK_OEM_5, Key::Backslash },
     { VK_OEM_6, Key::RBracket },
     { VK_OEM_7, Key::Apostrophe },
-};
-
-const std::map<UINT, MouseButton> mouseButtonMappings = {
-    { VK_LBUTTON, MouseButton::LButton },
-    { VK_RBUTTON, MouseButton::RButton },
-    { VK_MBUTTON, MouseButton::MButton },
-    { VK_XBUTTON1, MouseButton::XButton1 },
-    { VK_XBUTTON2, MouseButton::XButton2 }
 };
 
 }

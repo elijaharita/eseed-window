@@ -22,6 +22,14 @@
 
 namespace esd::wnd {
 
+enum struct MouseButton {
+    LButton = 1,
+    RButton = 2,
+    MButton = 3,
+    XButton1 = 4,
+    XButton2 = 5
+};
+
 enum struct Key {
     Unknown = 0,
     Backspace = 8,

@@ -16,11 +16,11 @@ Hello everyone. This project was originally designed as a part of my game engine
 - Current supported rendering APIs
   - Vulkan
 - Input handling
-  - Polling only atm
+  - Event polling and waiting
   - Keyboard
     - Key callback
       - Applicable key codes are mapped to their ASCII analogs
-    - Char input callback
+    - Char input callback (Unicode)
     - Key state getter
   - Mouse
     - Cursor position getter and setter
@@ -28,10 +28,9 @@ Hello everyone. This project was originally designed as a part of my game engine
     - Mouse button state getter
     - Mouse move callback
     - Mouse button callback
-- Title management
+- Title management (Unicode)
 - Size and position management
 - Fullscreen
-- Thread safety
 
 ### Planned
 - More platform support
@@ -41,9 +40,8 @@ Hello everyone. This project was originally designed as a part of my game engine
 - More rendering API support
   - OpenGL context management
   - Possibly others
-- Ability to wait on events in addition to polling
-- Input state getters (in addition to callbacks)
 - More input handling
+  - Mouse capturing
   - Controllers / gamepads
   - Additional (needs more research)
 - Thread safety
@@ -62,7 +60,7 @@ After the window has been created, it needs to be polled for events continuously
 When the window class goes out of scope or is destroyed, the window itself will be freed and destroyed automatically.
 
 ```cpp
-#include <esd/window/window.hpp>
+#include <eseed/window/window.hpp>
 
 int main() {
   
@@ -88,6 +86,12 @@ window.keyHandler = [](esd::wnd::KeyEvent e) { ... };
 
 Called when a key is pressed or released. `e` contains a key code and a boolean indicating whether it was pressed or released.
 
+Individual key states can also be queried with `.isKeyDown(esd::wnd::Key)`.
+
+Toggleable keys' toggle states (such as caps lock) can be queried with `.isKeyToggled(esd::wnd::Key)`.
+
+Keys
+
 #### Keyboard Char Input
 ```cpp
 window.keyCharHandler = [](char32_t c) { ... };
@@ -104,12 +108,18 @@ window.cursorMoveHandler = [](esd::wnd::CursorMoveEvent e) { ... };
 
 Called while the cursor is actively moving. `e` contains the cursor's window coordinates, as well as screen coordinates.
 
+Cursor position can be checked at any time using `.getCursorPos()` and `.getCursorScreenPos()`.
+
+Cursor position can be set using `.setCursorPos(esd::wnd::Pos)` and `.setCursorScreenPos(esd::wnd::Pos)`.
+
 #### Mouse Button Input
 ```cpp
 window.mouseButtonHandler = [](esd::wnd::MouseButtonEvent e) { ... };
 ```
 
 Called when a mouse button is pressed or released. `e` contains a button code and boolean indicating whether it was pressed or released.
+
+Individual mouse button states can be queried with `.isMouseButtonDown(esd::wnd::MouseButton)`
 
 ### Vulkan support
 The `esd::wnd::VulkanWindow` class is a helper class extending the base window class to provide platform-specific Vulkan functionality (surface creation). Both the C Vulkan library and C++ bindings (`vulkan.hpp`) are supported.
@@ -125,7 +135,7 @@ Make sure to include the Vulkan header before `<esd/window/vulkanwindow.hpp>`.
 
 ```cpp
 #include <vulkan/vulkan.hpp>
-#include <esd/window/vulkanwindow.hpp>
+#include <eseed/window/vulkanwindow.hpp>
 
 int main() {
     // Window creation
