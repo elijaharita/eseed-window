@@ -46,9 +46,10 @@ vk::ShaderModule loadShaderModule(vk::Device device, std::string path) {
 
     file.close();
 
-    return device.createShaderModule(vk::ShaderModuleCreateInfo()
-        .setCodeSize(code.size() * 4)
-        .setPCode(code.data())
+    return device.createShaderModule(
+        vk::ShaderModuleCreateInfo()
+            .setCodeSize(code.size() * 4)
+            .setPCode(code.data())
     );
 }
 
@@ -57,18 +58,15 @@ int main() {
 
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         // Close window when Escape is pressed
-        if (e.key == Key::Esc)
-            window.setCloseRequested(true);
+        if (e.key == Key::Esc) window.setCloseRequested(true);
 
         // Toggle fullscreen when F11 is pressed
-        if (e.key == Key::F11)
-            window.setFullscreen(!window.isFullscreen());
+        if (e.key == Key::F11) window.setFullscreen(!window.isFullscreen());
     };
 
     // CREATE INSTANCE
 
-    std::vector<const char*> instanceExtensions = 
-        window.getRequiredSurfaceInstanceExtensions();
+    std::vector<const char*> instanceExtensions = window.getRequiredSurfaceInstanceExtensions();
     std::vector<const char*> instanceLayers = { "VK_LAYER_KHRONOS_validation" };
 
     auto availableInstanceExtensions = 
@@ -143,10 +141,7 @@ int main() {
             .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
             .setImageArrayLayers(1)
             .setImageColorSpace(surfaceFormat.colorSpace)
-            .setImageExtent({ 
-                (uint32_t)window.getSize().w, 
-                (uint32_t)window.getSize().h 
-            })
+            .setImageExtent({ (uint32_t)window.getSize().w, (uint32_t)window.getSize().h })
             .setImageFormat(surfaceFormat.format)
             .setImageSharingMode(vk::SharingMode::eExclusive)
             .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)

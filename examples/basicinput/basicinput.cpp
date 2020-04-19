@@ -19,8 +19,7 @@ int main() {
     // Handles raw key presses and releases
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         
-        // Only handle key down events, key up can be intercepted by checking
-        // for !e.down (or just an else statement)
+        // Only handle key down events, key up can be intercepted by checking for !e.down (or just an else statement)
         if (e.down) {
 
             // Close window when escape is pressed
@@ -34,13 +33,13 @@ int main() {
 
     // Handles interpreted character input 
     // (Shift + "1" causes "!" on US keyboard, etc.)
-    window.keyCharHandler = [&](char32_t c) {
+    window.keyCharHandler = [&](esd::wnd::KeyCharEvent e) {
 
-        // If the ASCII code is BS (backspace), specially remove a character
-        if (c == 0x08) text = text.substr(0, text.length() - 1);
+        // If the code point is ASCII BS (backspace), specially remove a character
+        if (e.codePoint == 0x08) text = text.substr(0, text.length() - 1);
 
         // Otherwise add the character to the string
-        else text += codePointToUtf8(c);
+        else text += codePointToUtf8(e.codePoint);
 
         window.setTitle(cursorPosString + " | " + text);
     };
@@ -63,6 +62,14 @@ int main() {
             << (e.down ? "pressed" : "released")
             << " "
             << std::endl;
+    };
+
+    // Move window based on scroll
+    window.scrollHandler = [&](esd::wnd::ScrollEvent e) {
+        auto pos = window.getPos();
+        pos.x += int(e.hScroll * 30);
+        pos.y -= int(e.vScroll * 30);
+        window.setPos(pos);
     };
 
     // Check for window updates until the close button is pressed

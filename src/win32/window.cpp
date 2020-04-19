@@ -29,7 +29,11 @@
 
 using namespace esd::wnd;
 
-Window::Window(std::string title, Size size, std::optional<Pos> pos) {
+Window::Window(
+    std::string title, 
+    WindowSize size, 
+    std::optional<WindowPos> pos
+) {
 
     impl = std::make_unique<Impl>();
 
@@ -124,13 +128,13 @@ void Window::setTitle(std::string title) {
     SetWindowTextW(impl->hWnd, Impl::stringToWideString(title).c_str());
 }
 
-Size Window::getSize() {
+WindowSize Window::getSize() {
     RECT rect; 
     GetClientRect(impl->hWnd, &rect);
-    return Size { rect.right - rect.left, rect.bottom - rect.top };
+    return WindowSize { rect.right - rect.left, rect.bottom - rect.top };
 }
 
-void Window::setSize(Size size) {
+void Window::setSize(WindowSize size) {
 
     if (isFullscreen()) return;
     
@@ -150,13 +154,13 @@ void Window::setSize(Size size) {
     );
 }
 
-Pos Window::getPos() {
+WindowPos Window::getPos() {
     RECT rect = { 0, 0 };
     ClientToScreen(impl->hWnd, (POINT*)&rect);
     return { rect.left, rect.top };
 }
 
-void Window::setPos(Pos pos) {
+void Window::setPos(WindowPos pos) {
     
     if (isFullscreen()) return;
 
@@ -250,27 +254,27 @@ bool Window::isKeyToggled(Key key) {
     }
 }
 
-Pos Window::getCursorPos() {
+MousePos Window::getCursorPos() {
     POINT point;
     GetCursorPos(&point);
     ScreenToClient(impl->hWnd, &point);
-    return Pos { point.x, point.y };
+    return MousePos { (double)point.x, (double)point.y };
 }
 
-void Window::setCursorPos(Pos pos) {
-    POINT point = { pos.x, pos.y };
+void Window::setCursorPos(MousePos pos) {
+    POINT point = { (LONG)pos.x, (LONG)pos.y };
     ClientToScreen(impl->hWnd, &point);
     SetCursorPos(point.x, point.y);
 }
 
-Pos Window::getCursorScreenPos() {
+MousePos Window::getCursorScreenPos() {
     POINT point;
     GetCursorPos(&point);
-    return Pos { point.x, point.y };
+    return MousePos { (double)point.x, (double)point.y };
 }
 
-void Window::setCursorScreenPos(Pos pos) {
-    SetCursorPos(pos.x, pos.y);
+void Window::setCursorScreenPos(MousePos pos) {
+    SetCursorPos((LONG)pos.x, (LONG)pos.y);
 }
 
 bool Window::isMouseButtonDown(MouseButton button) {
@@ -280,7 +284,7 @@ bool Window::isMouseButtonDown(MouseButton button) {
     throw std::runtime_error("Unknown mouse button");
 }
 
-RECT Window::Impl::createWindowRect(Size size, Pos pos) {
+RECT Window::Impl::createWindowRect(WindowSize size, WindowPos pos) {
     RECT rect;
     rect.left = pos.x;
     rect.top = pos.y;
@@ -292,7 +296,7 @@ RECT Window::Impl::createWindowRect(Size size, Pos pos) {
 }
 
 // TODO: improve key mapping performance
-// Probably use two arrays instead of a map, barely any more memory, faster
+// Probably use two arrays instead of a map, barely any more memory, faster 
 // mapping
 UINT Window::Impl::toWin32KeyCode(Key keyCode) {
     for (const auto& it : keyMappings)
@@ -304,14 +308,10 @@ UINT Window::Impl::extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard) {
     // Differentiate left and right modifier keys
     bool extended = rawKeyboard.Flags & RI_KEY_E0;
     switch (rawKeyboard.VKey) {
-    case VK_SHIFT:
-        return MapVirtualKeyW(rawKeyboard.MakeCode, MAPVK_VSC_TO_VK_EX);
-    case VK_CONTROL:
-        return extended ? VK_RCONTROL : VK_LCONTROL;
-    case VK_MENU:
-        return extended ? VK_RMENU : VK_LMENU;
-    default:
-        return rawKeyboard.VKey;
+    case VK_SHIFT: return MapVirtualKeyW(rawKeyboard.MakeCode, MAPVK_VSC_TO_VK_EX);
+    case VK_CONTROL: return extended ? VK_RCONTROL : VK_LCONTROL;
+    case VK_MENU: return extended ? VK_RMENU : VK_LMENU;
+    default: return rawKeyboard.VKey;
     }
 }
 
@@ -337,29 +337,39 @@ LRESULT CALLBACK Window::Impl::wndProc(
 
     // Signal key character callback
     case WM_CHAR:
-        {
-            if (window->keyCharHandler) 
-                window->keyCharHandler((char32_t)wParam);
+        if (window->keyCharHandler) {
+            KeyCharEvent event;
+            event.codePoint = (char32_t)wParam;
+            window->keyCharHandler(event);
         }
         break;
 
     // Signal cursor move callback
-    // TODO: movement outside of client bounds should be detected, but isn't
     case WM_MOUSEMOVE:
-        {
+        if (window->cursorMoveHandler) {
             CursorMoveEvent event;
 
             // Supplied coordinates are in client space
             POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-            event.pos = { point.x, point.y };
+            event.pos = { (double)point.x, (double)point.y };
 
             // Convert the point to screen space and store in event
             ClientToScreen(window->impl->hWnd, &point);
-            event.screenPos = { point.x, point.y };
+            event.screenPos = { (double)point.x, (double)point.y };
             
-            if (window->cursorMoveHandler) window->cursorMoveHandler(event);
+            window->cursorMoveHandler(event);
         }
         break;
+    
+    // Signal mouse wheel callback
+    case WM_MOUSEWHEEL:
+        if (window->scrollHandler) {
+            ScrollEvent event;
+            event.vScroll = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+            event.hScroll = 0;
+            window->scrollHandler(event);
+        }
+        return 0;
 
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:
@@ -368,7 +378,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
                 MouseButton::LButton, 
                 uMsg == WM_LBUTTONDOWN
             });
-        break;
+        return 0;
     case WM_RBUTTONDOWN:
     case WM_RBUTTONUP:
         if (window->mouseButtonHandler)
@@ -376,7 +386,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
                 MouseButton::RButton, 
                 uMsg == WM_RBUTTONDOWN
             });
-        break;
+        return 0;
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
         if (window->mouseButtonHandler)
@@ -384,7 +394,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
                 MouseButton::MButton, 
                 uMsg == WM_MBUTTONDOWN 
             });
-        break;
+        return 0;
     case WM_XBUTTONDOWN:
     case WM_XBUTTONUP:
         if (window->mouseButtonHandler)
@@ -394,7 +404,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
                     : MouseButton::XButton2, 
                 uMsg == WM_XBUTTONDOWN
             }); 
-        break;
+        return 0;
     
     // For intercepting events such as keyboard input that give some strange 
     // undesired outputs using the normal window message

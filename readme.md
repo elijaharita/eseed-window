@@ -9,8 +9,7 @@ A cross-platform, minimal, modern window library for C++17. Designed to support 
 ## A message from me
 Hello everyone. This project is my second library, and began as a part of my game engine. If anyone is interested in contributing a different platform / new render API support, I'd love to work with you! In any case, I'll slowly be adding functionality myself, but it'll take plenty of research :) I hope someone will find this library useful!
 
-## Known bugs
-- Win32 window doesn't detect cursor movement outside client frame
+**This project is currently in active development and some interface features may break at any time until this notice is removed**
 
 ## Features
 - Current supported platforms

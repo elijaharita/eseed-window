@@ -30,12 +30,13 @@ public:
     WINDOWPLACEMENT windowedPlacement;
     bool closeRequested;
     
-    // Create a Win32 RECT adjusted for the window style based on an
-    // esd::wnd Size
-    RECT createWindowRect(Size size, Pos pos = {});
+    // Create a Win32 RECT adjusted for the window style based on an esd::wnd 
+    // Size
+    RECT createWindowRect(WindowSize size, WindowPos pos = {});
 
-    // Get VKey from a Win32 RAWKEYBOARD with differentiated left and right
-    // modifier keys (e.g. VK_LSHIFT and VK_RSHIFT instead of VK_SHIFT)
+    // Get VKey from a Win32 RAWKEYBOARD with differentiated left and right 
+    // modifier keys 
+    // (e.g. VK_LSHIFT and VK_RSHIFT instead of VK_SHIFT)
     static UINT extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard);
 
     // Convert a Win32 virtual key code to esd::wnd key code
@@ -45,14 +46,10 @@ public:
     static UINT toWin32KeyCode(Key keyCode);
 
     // Win32 WNDPROC
-    static LRESULT CALLBACK wndProc(
-        HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
-    );
+    static LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     // Win32 HOOKPROC
-    static LRESULT CALLBACK lowLevelKeyboardProc(
-        int nCode, WPARAM wParam, LPARAM lParam
-    );
+    static LRESULT CALLBACK lowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
     static std::string wideStringToString(const std::wstring& wstring);
     static std::wstring stringToWideString(const std::string& string);

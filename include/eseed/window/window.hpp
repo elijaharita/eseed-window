@@ -28,37 +28,25 @@
 
 namespace esd::wnd {
 
-struct Size {
-    int w, h;
-};
+struct WindowSize { int w, h; };
+struct WindowPos { int x, y; };
+struct MousePos { double x, y; };
 
-struct Pos {
-    int x, y;
-};
-
-struct KeyEvent {
-    Key key;
-    bool down;
-};
-
-struct CursorMoveEvent {
-    Pos pos;
-    Pos screenPos;
-};
-
-struct MouseButtonEvent {
-    MouseButton button;
-    bool down;
-};
+struct KeyEvent { Key key; bool down; };
+struct KeyCharEvent { char32_t codePoint; };
+struct CursorMoveEvent { MousePos pos; MousePos screenPos; };
+struct MouseButtonEvent { MouseButton button; bool down; };
+struct ScrollEvent { double vScroll, hScroll; };
 
 class Window {
 public:
     std::function<void(KeyEvent)> keyHandler;
-    std::function<void(char32_t)> keyCharHandler;
+    std::function<void(KeyCharEvent)> keyCharHandler;
     std::function<void(CursorMoveEvent)> cursorMoveHandler;
     std::function<void(MouseButtonEvent)> mouseButtonHandler;
+    std::function<void(ScrollEvent)> scrollHandler;
 
-    Window(std::string title, Size size, std::optional<Pos> pos = std::nullopt);
+    Window(std::string title, WindowSize size, std::optional<WindowPos> pos = std::nullopt);
     ~Window();
 
     // Poll for window events
@@ -70,11 +58,11 @@ public:
     std::string getTitle();
     void setTitle(std::string title);
 
-    Size getSize();
-    void setSize(Size size);
+    WindowSize getSize();
+    void setSize(WindowSize size);
 
-    Pos getPos();
-    void setPos(Pos pos);
+    WindowPos getPos();
+    void setPos(WindowPos pos);
 
     bool isCloseRequested();
     void setCloseRequested(bool closeRequested);
@@ -88,11 +76,11 @@ public:
     // Always returns false for non-toggleable keys
     bool isKeyToggled(Key keyCode);
 
-    Pos getCursorPos();
-    void setCursorPos(Pos pos);
+    MousePos getCursorPos();
+    void setCursorPos(MousePos pos);
 
-    Pos getCursorScreenPos();
-    void setCursorScreenPos(Pos pos);
+    MousePos getCursorScreenPos();
+    void setCursorScreenPos(MousePos pos);
 
     bool isMouseButtonDown(MouseButton button);
 

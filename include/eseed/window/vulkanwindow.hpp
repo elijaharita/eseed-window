@@ -34,7 +34,7 @@ namespace esd::wnd {
 
 class VulkanWindow : public Window {
 public:
-    VulkanWindow(std::string title, Size size) : Window(title, size) {}
+    VulkanWindow(std::string title, WindowSize size) : Window(title, size) {}
 
     // Get instance extensions required to create a Vulkan surface on the
     // current platform    
