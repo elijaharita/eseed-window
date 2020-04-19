@@ -30,11 +30,11 @@ namespace esd::wnd {
 
 struct WindowSize { int w, h; };
 struct WindowPos { int x, y; };
-struct MousePos { double x, y; };
+struct CursorPos { double x, y; };
 
 struct KeyEvent { Key key; bool down; };
 struct KeyCharEvent { char32_t codePoint; };
-struct CursorMoveEvent { MousePos pos; MousePos screenPos; };
+struct CursorMoveEvent { CursorPos pos; CursorPos screenPos; };
 struct MouseButtonEvent { MouseButton button; bool down; };
 struct ScrollEvent { double vScroll, hScroll; };
 
@@ -76,11 +76,11 @@ public:
     // Always returns false for non-toggleable keys
     bool isKeyToggled(Key keyCode);
 
-    MousePos getCursorPos();
-    void setCursorPos(MousePos pos);
+    CursorPos getCursorPos();
+    void setCursorPos(CursorPos pos);
 
-    MousePos getCursorScreenPos();
-    void setCursorScreenPos(MousePos pos);
+    CursorPos getCursorScreenPos();
+    void setCursorScreenPos(CursorPos pos);
 
     bool isMouseButtonDown(MouseButton button);
 

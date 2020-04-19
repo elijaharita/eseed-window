@@ -1,3 +1,3 @@
 Basic windows don't actually do anything, really. They're just a blank window, a base class for each render API specific implementation. You probably shouldn't ever use them in practice, but the example code here doesn't make use of any rendering API, so it has been chosen for simplicity.
 
-This test prints keyboard character input to the title of the window, removes a character when delete ASCII code is detected, and closes the window when escape is pressed.
+This test prints Unicode keyboard character input to the title of the window, removes a character when delete ASCII code is detected, moves the window when scrolling with the mouse wheel / trackpad, and closes the window when escape is pressed.
