@@ -21,7 +21,8 @@
 #pragma once
 
 #include <eseed/window/window.hpp>
-#include <Windows.h>
+#include <windows.h>
+#include <winuser.h>
 
 class esd::wnd::Window::Impl {
 public:
@@ -30,8 +31,7 @@ public:
     WINDOWPLACEMENT windowedPlacement;
     bool closeRequested;
     
-    // Create a Win32 RECT adjusted for the window style based on an esd::wnd 
-    // Size
+    // Convert window client dimensions to Win32 window RECT
     RECT createWindowRect(WindowSize size, WindowPos pos = {});
 
     // Get VKey from a Win32 RAWKEYBOARD with differentiated left and right 

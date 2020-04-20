@@ -22,7 +22,8 @@
 
 #include "inputmappings.hpp"
 #include "impl.hpp"
-#include <Windows.h>
+#include <windows.h>
+#include <winuser.h>
 #include <windowsx.h>
 #include <iostream>
 #include <set>
@@ -53,7 +54,7 @@ Window::Window(
 
     RECT rect = impl->createWindowRect(size, *pos);
     impl->hWnd = CreateWindowExW(
-        NULL,
+        0,
         className,
         Impl::stringToWideString(title).c_str(),
         WS_OVERLAPPEDWINDOW,
@@ -83,8 +84,8 @@ Window::Window(
     // https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
 
     RAWINPUTDEVICE rid[] = {
-        { 0x01, 0x06, NULL, impl->hWnd }, // Keyboard
-        { 0x01, 0x07, NULL, impl->hWnd }, // Keypad (Numpad)
+        { 0x01, 0x06, 0, impl->hWnd }, // Keyboard
+        { 0x01, 0x07, 0, impl->hWnd }, // Keypad (Numpad)
     };
 
     RegisterRawInputDevices(rid, sizeof(rid) / sizeof(rid[0]), sizeof(rid[0]));
@@ -150,7 +151,7 @@ void Window::setSize(WindowSize size) {
         rect.top,
         rect.right - rect.left,
         rect.bottom - rect.top,
-        NULL
+        0
     );
 }
 
@@ -173,7 +174,7 @@ void Window::setPos(WindowPos pos) {
         rect.top,
         rect.right - rect.left,
         rect.bottom - rect.top,
-        NULL
+        0
     );
 }
 
@@ -252,28 +253,29 @@ bool Window::isKeyToggled(Key key) {
     for (auto it : keyMappings) {
         if (it.second == key) return GetKeyState(it.first) & 0x0001;
     }
+    throw std::runtime_error("Unknown key");
 }
 
-MousePos Window::getCursorPos() {
+CursorPos Window::getCursorPos() {
     POINT point;
     GetCursorPos(&point);
     ScreenToClient(impl->hWnd, &point);
-    return MousePos { (double)point.x, (double)point.y };
+    return CursorPos { (double)point.x, (double)point.y };
 }
 
-void Window::setCursorPos(MousePos pos) {
+void Window::setCursorPos(CursorPos pos) {
     POINT point = { (LONG)pos.x, (LONG)pos.y };
     ClientToScreen(impl->hWnd, &point);
     SetCursorPos(point.x, point.y);
 }
 
-MousePos Window::getCursorScreenPos() {
+CursorPos Window::getCursorScreenPos() {
     POINT point;
     GetCursorPos(&point);
-    return MousePos { (double)point.x, (double)point.y };
+    return CursorPos { (double)point.x, (double)point.y };
 }
 
-void Window::setCursorScreenPos(MousePos pos) {
+void Window::setCursorScreenPos(CursorPos pos) {
     SetCursorPos((LONG)pos.x, (LONG)pos.y);
 }
 
@@ -291,7 +293,7 @@ RECT Window::Impl::createWindowRect(WindowSize size, WindowPos pos) {
     rect.right = pos.x + size.w;
     rect.bottom = pos.y + size.h;
     // TODO: remove hard-coded style parameter
-    AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW ^ WS_OVERLAPPED, FALSE, NULL);
+    AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW ^ WS_OVERLAPPED, FALSE, 0);
     return rect;
 }
 
@@ -301,7 +303,7 @@ RECT Window::Impl::createWindowRect(WindowSize size, WindowPos pos) {
 UINT Window::Impl::toWin32KeyCode(Key keyCode) {
     for (const auto& it : keyMappings)
         if (it.second == keyCode) return it.first;
-    return NULL;
+    return 0;
 }
 
 UINT Window::Impl::extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard) {
@@ -400,7 +402,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
         if (window->mouseButtonHandler)
             window->mouseButtonHandler({
                 GET_XBUTTON_WPARAM(wParam) == XBUTTON1 
-                    ? MouseButton::XButton1 
+                    ? MouseButton::XButton1
                     : MouseButton::XButton2, 
                 uMsg == WM_XBUTTONDOWN
             }); 
@@ -462,11 +464,11 @@ LRESULT CALLBACK Window::Impl::lowLevelKeyboardProc(
 std::string Window::Impl::wideStringToString(const std::wstring& wstring) {
     int length = WideCharToMultiByte(
         CP_UTF8, 
-        NULL, 
+        0, 
         wstring.c_str(), 
         -1, 
         NULL, 
-        NULL, 
+        0, 
         NULL, 
         NULL
     );
@@ -475,7 +477,7 @@ std::string Window::Impl::wideStringToString(const std::wstring& wstring) {
 
     WideCharToMultiByte(
         CP_UTF8,
-        NULL,
+        0,
         wstring.c_str(),
         -1,
         (LPSTR)string.c_str(),
@@ -490,18 +492,18 @@ std::string Window::Impl::wideStringToString(const std::wstring& wstring) {
 std::wstring Window::Impl::stringToWideString(const std::string& string) {
     int wlength = MultiByteToWideChar(
         CP_UTF8,
-        NULL,
+        0,
         string.c_str(),
         -1,
         NULL,
-        NULL
+        0
     );
 
     std::wstring wstring(wlength - 1, 0);
 
     MultiByteToWideChar(
         CP_UTF8,
-        NULL,
+        0,
         string.c_str(),
         -1,
         (LPWSTR)wstring.c_str(),

@@ -119,16 +119,16 @@ Cursor position can be set using `.setCursorPos(esd::wnd::CursorPos)` and `.setC
 window.mouseButtonHandler = [](esd::wnd::MouseButtonEvent e) { ... };
 ```
 
+Called when a mouse button is pressed or released. `e` contains a button code and boolean indicating whether it was pressed or released.
+
+Individual mouse button states can be queried with `.isMouseButtonDown(esd::wnd::MouseButton)`
+
 #### Scrolling
 ```cpp
 window.scrollHandler = [](esd::wnd::ScrollEvent e) { ... };
 ```
 
 Called when vertical or horizontal scroll is detected. `e` contains `vScroll` for vertical scroll and `hScroll` for horizontal scroll.
-
-Called when a mouse button is pressed or released. `e` contains a button code and boolean indicating whether it was pressed or released.
-
-Individual mouse button states can be queried with `.isMouseButtonDown(esd::wnd::MouseButton)`
 
 ### Vulkan support
 The `esd::wnd::VulkanWindow` class is a helper class extending the base window class to provide platform-specific Vulkan functionality (surface creation). Both the C Vulkan library and C++ bindings (`vulkan.hpp`) are supported.
