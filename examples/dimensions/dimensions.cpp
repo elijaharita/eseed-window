@@ -20,7 +20,6 @@
 // SOFTWARE.
 
 #include <iostream>
-#include <thread>
 
 int main() {
     esd::wnd::Window window("Dimensions!", { 1366, 768 });
@@ -76,9 +75,6 @@ int main() {
     };
 
     while (!window.isCloseRequested()) {
-        // Sleep for a sixtieth of a second so cpu doesn't evaporate :)
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
-
-        window.poll();
+        window.waitEvents();
     }
 }

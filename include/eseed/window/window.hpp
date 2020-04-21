@@ -70,11 +70,11 @@ public:
     bool isFullscreen();
     void setFullscreen(bool fullscreen);
 
-    bool isKeyDown(Key keyCode);
+    bool isKeyDown(Key key);
 
     // Get toggle state of applicable keys like caps lock or num lock
     // Always returns false for non-toggleable keys
-    bool isKeyToggled(Key keyCode);
+    bool isKeyToggled(Key key);
 
     CursorPos getCursorPos();
     void setCursorPos(CursorPos pos);

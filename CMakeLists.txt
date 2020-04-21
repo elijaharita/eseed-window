@@ -23,10 +23,18 @@ endif()
 # Choose platform specific implementation
 
 if(WIN32)
+    message("Using Win32")
     target_sources(eseed_window PRIVATE src/win32/window.cpp)
     if(ESD_WND_ENABLE_VULKAN_SUPPORT)
         target_sources(eseed_window PRIVATE src/win32/vulkanwindow.cpp)
     endif()
+endif()
+
+if(UNIX AND NOT APPLE)
+    message("Using X11")
+    target_sources(eseed_window PRIVATE src/x11/window.cpp)
+    find_package(X11 REQUIRED)
+    target_link_libraries(eseed_window PRIVATE ${X11_LIBRARIES})
 endif()
 
 # Testing
