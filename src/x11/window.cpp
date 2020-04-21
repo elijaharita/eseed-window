@@ -21,6 +21,7 @@
 #include "impl.hpp"
 #include <eseed/window/window.hpp>
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <iostream>
 
 using namespace esd::wnd;
@@ -49,15 +50,21 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
     XSelectInput(impl->display, impl->window, ExposureMask | KeyPressMask);
     XMapWindow(impl->display, impl->window);
 
-    // Set protocols to intercept
+    // Collect atoms
 
     impl->WM_DELETE_WINDOW = XInternAtom(impl->display, "WM_DELETE_WINDOW", False);
+    impl->_NET_WM_NAME = XInternAtom(impl->display, "_NET_WM_NAME", False);
+    impl->UTF8_STRING = XInternAtom(impl->display, "UTF8_STRING", False);
+
+    // Set protocols to intercept
 
     std::vector<Atom> protocols = {
-        impl->WM_DELETE_WINDOW
+        impl->WM_DELETE_WINDOW // Override window close
     };
     
     XSetWMProtocols(impl->display, impl->window, protocols.data(), protocols.size());
+
+    setTitle(title);
 }
 
 esd::wnd::Window::~Window() {
@@ -68,21 +75,13 @@ void esd::wnd::Window::poll() {
     // Get events as long as there is at least one available
     while (XPending(impl->display)) {
         XEvent event;
-
-        // Whether or not to forward this message back to the window manager
-        // Set to false in order to disable forwarding
-        bool propogateEvent = true;
-        
         XNextEvent(impl->display, &event);
-
-        std::cout << "event" << std::endl;
 
         switch (event.type) {
         case ClientMessage:
             {
                 if ((Atom)event.xclient.data.l[0] == impl->WM_DELETE_WINDOW) {
                     impl->closeRequested = true;
-                    propogateEvent = false;
                 }
             }
             break;
@@ -99,12 +98,65 @@ void esd::wnd::Window::waitEvents() {
     poll();
 }
 
+// TODO: Avoid unnecessary allocation
 std::string esd::wnd::Window::getTitle() {
-    return "";
+
+    Atom actualType;
+    int actualFormat;
+    unsigned long nItems;
+    unsigned long bytesAfter;
+    unsigned char* prop;
+
+    XGetWindowProperty(
+        impl->display, 
+        impl->window,
+        impl->_NET_WM_NAME,
+        0UL,
+        0UL,
+        False,
+        impl->UTF8_STRING,
+        &actualType,
+        &actualFormat,
+        &nItems,
+        &bytesAfter,
+        &prop
+    );
+
+    XFree((void*)prop);
+
+    XGetWindowProperty(
+        impl->display, 
+        impl->window,
+        impl->_NET_WM_NAME,
+        0UL,
+        (bytesAfter + 3UL) / 4UL, // Divide by four and round up
+        False,
+        impl->UTF8_STRING,
+        &actualType,
+        &actualFormat,
+        &nItems,
+        &bytesAfter,
+        &prop
+    );
+    
+    std::string title((char*)prop);
+
+    XFree((void*)prop);
+    
+    return title;
 }
 
 void esd::wnd::Window::setTitle(std::string title) {
-
+    XChangeProperty(
+        impl->display, 
+        impl->window, 
+        impl->_NET_WM_NAME, 
+        impl->UTF8_STRING,
+        8, 
+        PropModeReplace, 
+        (unsigned char*)title.c_str(), 
+        title.length()
+    );
 }
 
 WindowSize esd::wnd::Window::getSize() {

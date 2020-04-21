@@ -30,4 +30,6 @@ public:
     ::Window window;
     bool closeRequested;
     Atom WM_DELETE_WINDOW;
+    Atom _NET_WM_NAME;
+    Atom UTF8_STRING;
 };

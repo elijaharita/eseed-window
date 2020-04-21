@@ -14,6 +14,7 @@ Hello everyone. This project is my second library, and began as a part of my gam
 ## Features
 - Current supported platforms
   - Win32
+  - *X11 (in development)*
 - Current supported rendering APIs
   - Vulkan
 - Input handling

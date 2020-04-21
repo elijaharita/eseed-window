@@ -23,6 +23,7 @@
 
 int main() {
     esd::wnd::Window window("Dimensions!", { 1366, 768 });
+    std::cout << "title: " << window.getTitle() << std::endl;
 
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         if (e.down) {
