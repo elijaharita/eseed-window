@@ -60,6 +60,7 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
             | KeyPressMask 
             | KeyReleaseMask
             | StructureNotifyMask
+            | PointerMotionMask
     );
     XMapWindow(impl->display, impl->window);
 
@@ -314,19 +315,74 @@ bool esd::wnd::Window::isKeyToggled(Key key) {
 }
 
 CursorPos esd::wnd::Window::getCursorPos() {
-    return {};
+
+    ::Window child, root;
+    int rootX, rootY;
+    int winX, winY;
+    unsigned int mask;
+    
+    XQueryPointer(
+        impl->display, 
+        impl->window, 
+        &child,
+        &root,
+        &rootX,
+        &rootY,
+        &winX,
+        &winY,
+        &mask
+    );
+
+    return { (double)winX, (double)winY };
 }
 
 void esd::wnd::Window::setCursorPos(CursorPos pos) {
-
+    XWarpPointer(
+        impl->display,
+        None,
+        impl->window,
+        0,
+        0,
+        0,
+        0,
+        (int)pos.x,
+        (int)pos.y
+    );
 }
 
 CursorPos esd::wnd::Window::getCursorScreenPos() {
-    return {};
+    ::Window child, root;
+    int rootX, rootY;
+    int winX, winY;
+    unsigned int mask;
+    
+    XQueryPointer(
+        impl->display, 
+        impl->window, 
+        &child,
+        &root,
+        &rootX,
+        &rootY,
+        &winX,
+        &winY,
+        &mask
+    );
+
+    return { (double)rootX, (double)rootY };
 }
 
 void esd::wnd::Window::setCursorScreenPos(CursorPos pos) {
-
+    XWarpPointer(
+        impl->display,
+        None,
+        DefaultRootWindow(impl->display),
+        0,
+        0,
+        0,
+        0,
+        (int)pos.x,
+        (int)pos.y
+    );
 }
 
 bool esd::wnd::Window::isMouseButtonDown(MouseButton button) {
