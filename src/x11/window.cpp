@@ -191,18 +191,22 @@ WindowSize esd::wnd::Window::getSize() {
 }
 
 void esd::wnd::Window::setSize(WindowSize size) {
-    
+    XResizeWindow(impl->display, impl->window, size.w, size.h);
 }
 
 WindowPos esd::wnd::Window::getPos() {
     int x, y;
     ::Window child;
     XTranslateCoordinates(impl->display, impl->window, impl->root, 0, 0, &x, &y, &child);
+
+    XWindowAttributes xwa;
+    XGetWindowAttributes(impl->display, impl->window, &xwa);
+
     return { x, y };
 }
 
 void esd::wnd::Window::setPos(WindowPos pos) {
-
+    XMoveWindow(impl->display, impl->window, pos.x, pos.y);
 }
 
 bool esd::wnd::Window::isCloseRequested() {

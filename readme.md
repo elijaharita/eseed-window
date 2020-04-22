@@ -11,6 +11,14 @@ Hello everyone. This project is my second library, and began as a part of my gam
 
 **This project is currently in active development and some interface features may break at any time until this notice is removed**
 
+## Known quirks / issues
+- Win32
+  - Cursor movement callback not triggered when outside of window
+- X11
+  - Shift key does not repeat like other keys
+    - Repeat key presses may be disabled on all platforms, that's the purpose of the character callback
+  - `.setPosition(...)` sets the window position relative to the full decorated window, not the client area
+
 ## Features
 - Current supported platforms
   - Win32
