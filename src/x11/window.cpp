@@ -258,35 +258,34 @@ Key esd::wnd::Window::Impl::fromX11KeyCode(unsigned int x11KeyCode) {
 
 void esd::wnd::Window::Impl::initKeyTables() {
 
+    // Get list of XKB names and their associated key codes for the current
+    // environment
     XkbDescPtr desc = XkbGetMap(display, 0, XkbUseCoreKbd);
     XkbGetNames(display, XkbKeyNamesMask, desc);
 
+    // Size key lookup tables to fit all the possible keys
     esdKeyTable.resize(desc->max_key_code + 1);
     x11KeyTable.resize(desc->max_key_code + 1);
 
-    for (unsigned int i = desc->min_key_code; i <= desc->max_key_code; i++) {
-        
-        char* cname = desc->names->keys[i].name;
-        std::size_t clen = XkbKeyNameLength;
-        if (cname[3] == 0) clen--;
-        if (cname[2] == 0) clen--;
-        if (cname[1] == 0) clen--;
-        if (cname[0] == 0) clen--;
-        std::string name = std::string(cname, clen);
+    for (unsigned int x11KeyCode = 0; x11KeyCode <= desc->max_key_code; x11KeyCode++) {
         
         bool found = false;
         for (auto it : keyMappings) {
-            if (name == it.first) {
-                esdKeyTable[i] = it.second;
-                x11KeyTable[(std::size_t)it.second] = i;
+            if (strncmp(it.first, desc->names->keys[x11KeyCode].name, XkbKeyNameLength) == 0) {
+
+                esdKeyTable[x11KeyCode] = it.second;
+                x11KeyTable[(std::size_t)it.second] = x11KeyCode;
+                
                 found = true;
                 break;
             }
         }   
-         
-        if (!found) esdKeyTable[i] = Key::Unknown;
+        
+        // Any character with no corresponding esd key will be set to unknown
+        if (!found) esdKeyTable[x11KeyCode] = Key::Unknown;
     }
 
+    // Clean up desc and its key name list
     XkbFreeNames(desc, XkbKeyNamesMask, True);
     XkbFreeKeyboard(desc, 0, True);
 }

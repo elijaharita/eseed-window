@@ -27,7 +27,7 @@
 
 namespace esd::wnd {
 
-const std::map<std::string, Key> keyMappings = {
+const std::map<const char*, Key> keyMappings = {
     { "AE01", Key::Num1 },
     { "AE02", Key::Num2 },
     { "AE03", Key::Num3 },
