@@ -219,6 +219,9 @@ void esd::wnd::Window::setCloseRequested(bool closeRequested) {
     impl->closeRequested = closeRequested;
 }
 
+// Iterate through all the atoms contained in the _NET_WM_STATE window property
+// and check if _NET_WM_STATE_FULLSCREEN is present, to find out whether
+// fullscreen mode is active
 bool esd::wnd::Window::isFullscreen() {
 
     Atom actualType;
@@ -227,14 +230,15 @@ bool esd::wnd::Window::isFullscreen() {
     unsigned long bytesAfter;
     Atom* prop;
 
-    int i = 0;
+    int propertyIndex = 0;
     
+    // Iterate over each atom for _NET_WM_STATE
     while (bytesAfter > 0) {
         XGetWindowProperty(
             impl->display,
             impl->window,
             impl->_NET_WM_STATE,
-            i * sizeof(Atom),
+            propertyIndex * sizeof(Atom),
             sizeof(Atom),
             False,
             XA_ATOM,
@@ -246,16 +250,23 @@ bool esd::wnd::Window::isFullscreen() {
         );
 
         if (*prop == impl->_NET_WM_STATE_FULLSCREEN) {
+            // If _NET_WM_STATE_FULLSCREEN is found, fullscreen mode is active
+            // Make sure prop is freed before returning
             XFree(prop);
             return true;
-        } else {
-            XFree(prop);
         }
+
+        XFree(prop);
+
+        // Check next property in the next iteration
+        propertyIndex++;
     }
 
+    // If _NET_WM_STATE_FULLSCREEN wasn't present, return false
     return false;
 }
 
+// Send a ClientMessage event to X requesting fullscreen
 void esd::wnd::Window::setFullscreen(bool fullscreen) {
 
     XEvent xe = {};
@@ -264,7 +275,7 @@ void esd::wnd::Window::setFullscreen(bool fullscreen) {
     xe.xclient.window = impl->window;
     xe.xclient.message_type = impl->_NET_WM_STATE;
     xe.xclient.serial = 0;
-    xe.xclient.send_event = True;
+    xe.xclient.send_event = True; // The client sent this message
     xe.xclient.format = 32;
     xe.xclient.data.l[0] = fullscreen ? impl->_NET_WM_STATE_ADD : impl->_NET_WM_STATE_REMOVE; 
     xe.xclient.data.l[1] = impl->_NET_WM_STATE_FULLSCREEN; // Property
@@ -280,10 +291,25 @@ void esd::wnd::Window::setFullscreen(bool fullscreen) {
 }
 
 bool esd::wnd::Window::isKeyDown(Key key) {
+    char keys[32];
+    XQueryKeymap(impl->display, keys);
+
+    for (size_t i = 0; i < 32; i++) {
+        if (keys[i] == impl->x11KeyTable[(std::size_t)key]) return true;
+        else if (i == 0) break;
+    }
+    
     return false;
 }
 
 bool esd::wnd::Window::isKeyToggled(Key key) {
+    unsigned int state;
+    XkbGetIndicatorState(impl->display, XkbUseCoreKbd, &state);
+
+    if (key == Key::CapsLock) return state & 0x01;
+    if (key == Key::NumLock) return state & 0x02;
+    if (key == Key::ScrollLock) return state & 0x04;
+
     return false;
 }
 
