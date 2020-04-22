@@ -1,4 +1,3 @@
-#include <eseed/window/window.hpp>
 // Copyright (c) 2020 Elijah Seed Arita
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -19,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 // SOFTWARE.
 
+#include <eseed/window/window.hpp>
 #include <iostream>
 
 int main() {
@@ -27,8 +27,11 @@ int main() {
 
     auto size = window.getSize();
 
+    std::cout << "Size: " << size.w << ", " << size.h << std::endl;
+
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         if (e.down) {
+            std::cout << esd::wnd::getKeyName(e.key) << std::endl;
             
             // F11: Toggle fullscreen
             if (e.key == esd::wnd::Key::F11) {

@@ -27,9 +27,7 @@
 
 namespace esd::wnd {
 
-    // TODO: create xkb key name map
-
-const std::map<const char*, Key> keyMappings = {
+const std::map<std::string, Key> keyMappings = {
     { "AE01", Key::Num1 },
     { "AE02", Key::Num2 },
     { "AE03", Key::Num3 },

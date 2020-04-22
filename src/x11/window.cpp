@@ -257,21 +257,26 @@ Key esd::wnd::Window::Impl::fromX11KeyCode(unsigned int x11KeyCode) {
 }
 
 void esd::wnd::Window::Impl::initKeyTables() {
-    char name[XkbKeyNameLength + 1] = {};
 
     XkbDescPtr desc = XkbGetMap(display, 0, XkbUseCoreKbd);
     XkbGetNames(display, XkbKeyNamesMask, desc);
 
-    esdKeyTable.resize((std::size_t)Key::LastKey + 1);
+    esdKeyTable.resize(desc->max_key_code + 1);
     x11KeyTable.resize(desc->max_key_code + 1);
 
     for (unsigned int i = desc->min_key_code; i <= desc->max_key_code; i++) {
         
-        memcpy(name, desc->names->keys[i].name, XkbKeyNameLength);
+        char* cname = desc->names->keys[i].name;
+        std::size_t clen = XkbKeyNameLength;
+        if (cname[3] == 0) clen--;
+        if (cname[2] == 0) clen--;
+        if (cname[1] == 0) clen--;
+        if (cname[0] == 0) clen--;
+        std::string name = std::string(cname, clen);
         
         bool found = false;
         for (auto it : keyMappings) {
-            if (strcmp(name, it.first) == 0) {
+            if (name == it.first) {
                 esdKeyTable[i] = it.second;
                 x11KeyTable[(std::size_t)it.second] = i;
                 found = true;
@@ -282,5 +287,6 @@ void esd::wnd::Window::Impl::initKeyTables() {
         if (!found) esdKeyTable[i] = Key::Unknown;
     }
 
-    XFree(desc);
+    XkbFreeNames(desc, XkbKeyNamesMask, True);
+    XkbFreeKeyboard(desc, 0, True);
 }
