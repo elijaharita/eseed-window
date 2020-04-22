@@ -32,7 +32,12 @@ public:
     bool closeRequested;
     Atom WM_DELETE_WINDOW;
     Atom _NET_WM_NAME;
+    Atom _NET_WM_STATE_FULLSCREEN;
+    Atom _NET_WM_STATE;
     Atom UTF8_STRING;
+    constexpr static Atom _NET_WM_STATE_REMOVE = 0;
+    constexpr static Atom _NET_WM_STATE_ADD = 1;
+    constexpr static Atom _NET_WM_STATE_TOGGLE = 2;
 
     std::vector<Key> esdKeyTable;
     std::vector<unsigned int> x11KeyTable;

@@ -67,6 +67,8 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
 
     impl->WM_DELETE_WINDOW = XInternAtom(impl->display, "WM_DELETE_WINDOW", False);
     impl->_NET_WM_NAME = XInternAtom(impl->display, "_NET_WM_NAME", False);
+    impl->_NET_WM_STATE_FULLSCREEN = XInternAtom(impl->display, "_NET_WM_STATE_FULLSCREEN", False);
+    impl->_NET_WM_STATE = XInternAtom(impl->display, "_NET_WM_STATE", False);
     impl->UTF8_STRING = XInternAtom(impl->display, "UTF8_STRING", False);
 
     // Set protocols to intercept
@@ -218,11 +220,63 @@ void esd::wnd::Window::setCloseRequested(bool closeRequested) {
 }
 
 bool esd::wnd::Window::isFullscreen() {
+
+    Atom actualType;
+    int actualFormat;
+    unsigned long nitems;
+    unsigned long bytesAfter;
+    Atom* prop;
+
+    int i = 0;
+    
+    while (bytesAfter > 0) {
+        XGetWindowProperty(
+            impl->display,
+            impl->window,
+            impl->_NET_WM_STATE,
+            i * sizeof(Atom),
+            sizeof(Atom),
+            False,
+            XA_ATOM,
+            &actualType,
+            &actualFormat,
+            &nitems,
+            &bytesAfter,
+            (unsigned char**)&prop
+        );
+
+        if (*prop == impl->_NET_WM_STATE_FULLSCREEN) {
+            XFree(prop);
+            return true;
+        } else {
+            XFree(prop);
+        }
+    }
+
     return false;
 }
 
 void esd::wnd::Window::setFullscreen(bool fullscreen) {
 
+    XEvent xe = {};
+    xe.xclient.type = ClientMessage;
+    xe.xclient.display = impl->display;
+    xe.xclient.window = impl->window;
+    xe.xclient.message_type = impl->_NET_WM_STATE;
+    xe.xclient.serial = 0;
+    xe.xclient.send_event = True;
+    xe.xclient.format = 32;
+    xe.xclient.data.l[0] = fullscreen ? impl->_NET_WM_STATE_ADD : impl->_NET_WM_STATE_REMOVE; 
+    xe.xclient.data.l[1] = impl->_NET_WM_STATE_FULLSCREEN; // Property
+    xe.xclient.data.l[3] = 1; // Source: 1 (Regular application sent this message)
+    
+    XSendEvent(
+        impl->display,
+        DefaultRootWindow(impl->display),
+        False,
+        SubstructureNotifyMask,
+        &xe
+    );
 }
 
 bool esd::wnd::Window::isKeyDown(Key key) {

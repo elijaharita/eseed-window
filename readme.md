@@ -17,6 +17,7 @@ Hello everyone. This project is my second library, and began as a part of my gam
 - X11
   - Shift key does not repeat like other keys
     - Repeat key presses may be disabled on all platforms, that's the purpose of the character callback
+  - Print Screen does not seem to be detected
   - `.setPosition(...)` sets the window position relative to the full decorated window, not the client area
 
 ## Features
