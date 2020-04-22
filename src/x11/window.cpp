@@ -19,10 +19,12 @@
 // SOFTWARE.
 
 #include "impl.hpp"
+#include "inputmappings.hpp"
 #include <eseed/window/window.hpp>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <iostream>
+#include <cstring>
 
 using namespace esd::wnd;
 
@@ -35,10 +37,11 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
     }
 
     impl->screen = DefaultScreen(impl->display);
+    impl->root = RootWindow(impl->display, impl->screen);
     
     impl->window = XCreateSimpleWindow(
         impl->display, 
-        RootWindow(impl->display, impl->screen), 
+        impl->root, 
         pos ? pos->x : 0,
         pos ? pos->y : 0,
         size.w, 
@@ -47,7 +50,17 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
         BlackPixel(impl->display, impl->screen), 
         WhitePixel(impl->display, impl->screen)
     );
-    XSelectInput(impl->display, impl->window, ExposureMask | KeyPressMask);
+
+    impl->initKeyTables();
+    
+    XSelectInput(
+        impl->display, 
+        impl->window, 
+        ExposureMask 
+            | KeyPressMask 
+            | KeyReleaseMask
+            | StructureNotifyMask
+    );
     XMapWindow(impl->display, impl->window);
 
     // Collect atoms
@@ -74,16 +87,28 @@ esd::wnd::Window::~Window() {
 void esd::wnd::Window::poll() {
     // Get events as long as there is at least one available
     while (XPending(impl->display)) {
-        XEvent event;
-        XNextEvent(impl->display, &event);
+        XEvent xe;
+        XNextEvent(impl->display, &xe);
 
-        switch (event.type) {
+        switch (xe.type) {
+        case KeyPress:
+        case KeyRelease:
+            if (keyHandler) {
+                KeyEvent event;
+                event.down = xe.type == KeyPress;
+                event.key = impl->fromX11KeyCode(xe.xkey.keycode);
+                std::cout << "X11 Key Code: " << xe.xkey.keycode << std::endl;
+                keyHandler(event);
+            }
         case ClientMessage:
             {
-                if ((Atom)event.xclient.data.l[0] == impl->WM_DELETE_WINDOW) {
+                if ((Atom)xe.xclient.data.l[0] == impl->WM_DELETE_WINDOW) {
                     impl->closeRequested = true;
                 }
             }
+            break;
+        case ConfigureNotify:
+            // TODO: resize events
             break;
         }
     }
@@ -91,8 +116,8 @@ void esd::wnd::Window::poll() {
 
 void esd::wnd::Window::waitEvents() {
     // Wait for an event to become available
-    XEvent event;
-    XPeekEvent(impl->display, &event);
+    XEvent xe;
+    XPeekEvent(impl->display, &xe);
 
     // Then handle all the queued events like normal
     poll();
@@ -160,15 +185,20 @@ void esd::wnd::Window::setTitle(std::string title) {
 }
 
 WindowSize esd::wnd::Window::getSize() {
-    return {};
+    XWindowAttributes xwa;
+    XGetWindowAttributes(impl->display, impl->window, &xwa);
+    return { xwa.width, xwa.height };
 }
 
 void esd::wnd::Window::setSize(WindowSize size) {
-
+    
 }
 
 WindowPos esd::wnd::Window::getPos() {
-    return {};
+    int x, y;
+    ::Window child;
+    XTranslateCoordinates(impl->display, impl->window, impl->root, 0, 0, &x, &y, &child);
+    return { x, y };
 }
 
 void esd::wnd::Window::setPos(WindowPos pos) {
@@ -217,4 +247,40 @@ void esd::wnd::Window::setCursorScreenPos(CursorPos pos) {
 
 bool esd::wnd::Window::isMouseButtonDown(MouseButton button) {
     return false;
+}
+
+Key esd::wnd::Window::Impl::fromX11KeyCode(unsigned int x11KeyCode) {
+    if (x11KeyCode > (unsigned int)Key::LastKey)
+        return Key::Unknown;
+
+    return esdKeyTable[x11KeyCode];
+}
+
+void esd::wnd::Window::Impl::initKeyTables() {
+    char name[XkbKeyNameLength + 1] = {};
+
+    XkbDescPtr desc = XkbGetMap(display, 0, XkbUseCoreKbd);
+    XkbGetNames(display, XkbKeyNamesMask, desc);
+
+    esdKeyTable.resize((std::size_t)Key::LastKey + 1);
+    x11KeyTable.resize(desc->max_key_code + 1);
+
+    for (unsigned int i = desc->min_key_code; i <= desc->max_key_code; i++) {
+        
+        memcpy(name, desc->names->keys[i].name, XkbKeyNameLength);
+        
+        bool found = false;
+        for (auto it : keyMappings) {
+            if (strcmp(name, it.first) == 0) {
+                esdKeyTable[i] = it.second;
+                x11KeyTable[(std::size_t)it.second] = i;
+                found = true;
+                break;
+            }
+        }   
+         
+        if (!found) esdKeyTable[i] = Key::Unknown;
+    }
+
+    XFree(desc);
 }

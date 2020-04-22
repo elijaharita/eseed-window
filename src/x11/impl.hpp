@@ -27,9 +27,16 @@ class esd::wnd::Window::Impl {
 public:
     Display* display;
     int screen;
+    ::Window root;
     ::Window window;
     bool closeRequested;
     Atom WM_DELETE_WINDOW;
     Atom _NET_WM_NAME;
     Atom UTF8_STRING;
+
+    std::vector<Key> esdKeyTable;
+    std::vector<unsigned int> x11KeyTable;
+
+    Key fromX11KeyCode(unsigned int x11KeyCode);
+    void initKeyTables();
 };

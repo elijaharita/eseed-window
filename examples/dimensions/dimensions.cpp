@@ -25,8 +25,14 @@ int main() {
     esd::wnd::Window window("Dimensions!", { 1366, 768 });
     std::cout << "title: " << window.getTitle() << std::endl;
 
+    auto size = window.getSize();
+
+    std::cout << "Size: " << size.w << ", " << size.h << std::endl;
+
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         if (e.down) {
+            std::cout << esd::wnd::getKeyName(e.key) << std::endl;
+            
             // F11: Toggle fullscreen
             if (e.key == esd::wnd::Key::F11) {
                 window.setFullscreen(!window.isFullscreen());

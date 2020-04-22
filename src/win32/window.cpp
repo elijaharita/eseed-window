@@ -319,7 +319,7 @@ UINT Window::Impl::extractDiffWin32KeyCode(const RAWKEYBOARD& rawKeyboard) {
 
 // TODO: improve key mapping performance
 Key Window::Impl::fromWin32KeyCode(UINT win32KeyCode) {
-    auto it = keyMappings.find((int)win32KeyCode);
+    auto it = keyMappings.find(win32KeyCode);
     return it == keyMappings.end() ? Key::Unknown : it->second;
 }
 

@@ -36,7 +36,7 @@ Hello everyone. This project is my second library, and began as a part of my gam
 
 ### Planned
 - More platform support
-  - Mac, Wayland, X, etc. (needs a lot more research on my part, contributions appreciated)
+  - Mac, Wayland, possibly others (contributions appreciated)
   - More Windows support
     - IME input
 - More rendering API support
