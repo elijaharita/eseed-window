@@ -27,11 +27,8 @@ int main() {
 
     auto size = window.getSize();
 
-    std::cout << "Size: " << size.w << ", " << size.h << std::endl;
-
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         if (e.down) {
-            std::cout << esd::wnd::getKeyName(e.key) << std::endl;
             
             // F11: Toggle fullscreen
             if (e.key == esd::wnd::Key::F11) {
