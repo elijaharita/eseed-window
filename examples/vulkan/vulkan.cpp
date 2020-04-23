@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 // SOFTWARE.
 
-#define VK_USE_PLATFORM_WIN32_KHR
-
 #include <vulkan/vulkan.hpp>
 #include <eseed/window/vulkanwindow.hpp>
 #include <fstream>
@@ -54,7 +52,7 @@ vk::ShaderModule loadShaderModule(vk::Device device, std::string path) {
 }
 
 int main() {
-    esd::wnd::VulkanWindow window("ウィンドウ", { 256, 144 });
+    esd::wnd::VulkanWindow window("ウィンドウ", { 1366, 768 });
 
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         // Close window when Escape is pressed
@@ -417,6 +415,8 @@ int main() {
         window.poll();
     }
 
+    device.waitIdle();
+
     device.destroySemaphore(renderDone);
     device.destroySemaphore(swapchainImageReady);
     device.freeCommandBuffers(commandPool, commandBuffers);
@@ -431,5 +431,10 @@ int main() {
     device.destroySwapchainKHR(swapchain);
     device.destroy();
     instance.destroySurfaceKHR(surface);
+
+    // Close the window after destroying the surface but before destroying the
+    // instance
+    window.close();
+    
     instance.destroy();
 }

@@ -34,7 +34,10 @@ if(UNIX AND NOT APPLE)
     message("Using X11")
     target_sources(eseed_window PRIVATE src/x11/window.cpp)
     find_package(X11 REQUIRED)
-    target_link_libraries(eseed_window PRIVATE ${X11_LIBRARIES})
+    target_link_libraries(eseed_window ${X11_LIBRARIES})
+    if(ESD_WND_ENABLE_VULKAN_SUPPORT)
+        target_sources(eseed_window PRIVATE src/x11/vulkanwindow.cpp)
+    endif()
 endif()
 
 # Testing

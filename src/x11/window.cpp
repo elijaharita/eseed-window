@@ -106,9 +106,15 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
 }
 
 esd::wnd::Window::~Window() {
+    if (impl->display != nullptr) close();
+}
+
+void esd::wnd::Window::close() {
     XFree(impl->ic);
     XFree(impl->im);
+    XDestroyWindow(impl->display, impl->window);
     XCloseDisplay(impl->display);
+    impl->display = nullptr;
 }
 
 void esd::wnd::Window::poll() {

@@ -49,6 +49,10 @@ public:
     Window(std::string title, WindowSize size, std::optional<WindowPos> pos = std::nullopt);
     ~Window();
 
+    // Close the window and release all resources
+    // The window cannot be used again after this call
+    void close();
+
     // Poll for window events
     void poll();
 
