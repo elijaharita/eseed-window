@@ -38,15 +38,15 @@ Window::Window(
 
     impl = std::make_unique<Impl>();
 
-    impl->hInstance = GetModuleHandleW(NULL);
+    impl->hInstance = GetModuleHandleW(nullptr);
     
     constexpr wchar_t className[] = L"ESeed Window";
     
     WNDCLASSEXW wc = {};
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.hInstance = impl->hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hIcon = nullptr;
+    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.lpszClassName = className;
     wc.lpfnWndProc = (WNDPROC)Impl::wndProc;
     wc.cbWndExtra = sizeof(this);
@@ -63,14 +63,14 @@ Window::Window(
         pos ? rect.top : CW_USEDEFAULT,
         rect.right - rect.left,
         rect.bottom - rect.top,
-        NULL,
-        NULL,
+        nullptr,
+        nullptr,
         impl->hInstance,
-        NULL
+        nullptr
     );
 
     // Window is null if failed to initialize
-    if (impl->hWnd == NULL)
+    if (impl->hWnd == nullptr)
         throw std::runtime_error("Failed to create native Win32 window");
 
     // Set "this" pointer in window user data for use in WNDPROC
@@ -123,11 +123,14 @@ void Window::waitEvents() {
 std::string Window::getTitle() {
 
     int length = GetWindowTextLengthW(impl->hWnd);
+    wchar_t* cwtitle = new wchar_t[length + 1];
+    GetWindowTextW(impl->hWnd, cwtitle, length + 1);
 
-    std::wstring wtitle = std::wstring(length, 0);
-    GetWindowTextW(impl->hWnd, (LPWSTR)wtitle.c_str(), length + 1);
+    std::string title = Impl::wideStringToString(std::wstring(cwtitle));
 
-    return Impl::wideStringToString(wtitle);
+    delete[] cwtitle;
+    
+    return title;
 }
 
 void Window::setTitle(std::string title) {
@@ -137,7 +140,10 @@ void Window::setTitle(std::string title) {
 WindowSize Window::getSize() {
     RECT rect; 
     GetClientRect(impl->hWnd, &rect);
-    return WindowSize { rect.right - rect.left, rect.bottom - rect.top };
+    return WindowSize { 
+        static_cast<int>(rect.right - rect.left), 
+        static_cast<int>(rect.bottom - rect.top) 
+    };
 }
 
 void Window::setSize(WindowSize size) {
@@ -146,12 +152,12 @@ void Window::setSize(WindowSize size) {
     
     RECT rect = impl->createWindowRect(size, getPos());
 
-    int diffX = size.w - rect.right - rect.left;
-    int diffY = size.h - rect.bottom - rect.top;
+    int diffX = static_cast<int>(size.w) - rect.right - rect.left;
+    int diffY = static_cast<int>(size.h) - rect.bottom - rect.top;
 
     SetWindowPos(
         impl->hWnd, 
-        NULL,
+        nullptr,
         rect.left,
         rect.top,
         rect.right - rect.left,
@@ -161,8 +167,8 @@ void Window::setSize(WindowSize size) {
 }
 
 WindowPos Window::getPos() {
-    RECT rect = { 0, 0 };
-    ClientToScreen(impl->hWnd, (POINT*)&rect);
+    RECT rect = {};
+    ClientToScreen(impl->hWnd, reinterpret_cast<LPPOINT>(&rect));
     return { rect.left, rect.top };
 }
 
@@ -174,7 +180,7 @@ void Window::setPos(WindowPos pos) {
     
     SetWindowPos(
         impl->hWnd, 
-        NULL,
+        nullptr,
         rect.left,
         rect.top,
         rect.right - rect.left,
@@ -231,7 +237,7 @@ void Window::setFullscreen(bool fullscreen) {
         // Reapply stored dimensions
         SetWindowPos(
             impl->hWnd,
-            NULL,
+            nullptr,
             0, 0, 0, 0,
             SWP_NOMOVE
                 | SWP_NOSIZE
@@ -241,7 +247,7 @@ void Window::setFullscreen(bool fullscreen) {
         );
     }
 
-    InvalidateRect(impl->hWnd, NULL, TRUE);
+    InvalidateRect(impl->hWnd, nullptr, TRUE);
 }
 
 bool Window::isKeyDown(Key keyCode) {
@@ -265,11 +271,11 @@ CursorPos Window::getCursorPos() {
     POINT point;
     GetCursorPos(&point);
     ScreenToClient(impl->hWnd, &point);
-    return CursorPos { (double)point.x, (double)point.y };
+    return CursorPos { static_cast<double>(point.x), static_cast<double>(point.y) };
 }
 
 void Window::setCursorPos(CursorPos pos) {
-    POINT point = { (LONG)pos.x, (LONG)pos.y };
+    POINT point = { static_cast<LONG>(pos.x), static_cast<LONG>(pos.y) };
     ClientToScreen(impl->hWnd, &point);
     SetCursorPos(point.x, point.y);
 }
@@ -277,11 +283,11 @@ void Window::setCursorPos(CursorPos pos) {
 CursorPos Window::getCursorScreenPos() {
     POINT point;
     GetCursorPos(&point);
-    return CursorPos { (double)point.x, (double)point.y };
+    return CursorPos { static_cast<double>(point.x), static_cast<double>(point.y) };
 }
 
 void Window::setCursorScreenPos(CursorPos pos) {
-    SetCursorPos((LONG)pos.x, (LONG)pos.y);
+    SetCursorPos(static_cast<LONG>(pos.x), static_cast<LONG>(pos.y));
 }
 
 bool Window::isMouseButtonDown(MouseButton button) {
@@ -331,7 +337,7 @@ Key Window::Impl::fromWin32KeyCode(UINT win32KeyCode) {
 LRESULT CALLBACK Window::Impl::wndProc(
     HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 ) {
-    auto window = (Window*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+    auto window = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     switch (uMsg) {
 
@@ -346,7 +352,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
     case WM_CHAR:
         if (window->keyCharHandler) {
             KeyCharEvent event;
-            event.codePoint = (char32_t)wParam;
+            event.codePoint = static_cast<char32_t>(wParam);
             window->keyCharHandler(event);
         }
         break;
@@ -358,11 +364,11 @@ LRESULT CALLBACK Window::Impl::wndProc(
 
             // Supplied coordinates are in client space
             POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-            event.pos = { (double)point.x, (double)point.y };
+            event.pos = { static_cast<double>(point.x), static_cast<double>(point.y) };
 
             // Convert the point to screen space and store in event
             ClientToScreen(window->impl->hWnd, &point);
-            event.screenPos = { (double)point.x, (double)point.y };
+            event.screenPos = { static_cast<double>(point.x), static_cast<double>(point.y) };
             
             window->cursorMoveHandler(event);
         }
@@ -421,7 +427,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
             UINT rawInputSize = sizeof(rawInput);
 
             GetRawInputData(
-                (HRAWINPUT)lParam, 
+                reinterpret_cast<HRAWINPUT>(lParam), 
                 RID_INPUT, 
                 &rawInput, 
                 &rawInputSize, 
@@ -470,26 +476,30 @@ std::string Window::Impl::wideStringToString(const std::wstring& wstring) {
     int length = WideCharToMultiByte(
         CP_UTF8, 
         0, 
-        wstring.c_str(), 
+        reinterpret_cast<LPCWCH>(wstring.c_str()),
         -1, 
-        NULL, 
-        0, 
-        NULL, 
-        NULL
+        nullptr, 
+        0,
+        nullptr, 
+        nullptr
     );
 
-    std::string string(length - 1, 0);
+    char* cstring = new char[length];
 
     WideCharToMultiByte(
         CP_UTF8,
         0,
-        wstring.c_str(),
+        reinterpret_cast<LPCWCH>(wstring.c_str()),
         -1,
-        (LPSTR)string.c_str(),
+        reinterpret_cast<LPSTR>(cstring),
         length,
-        NULL,
-        NULL
+        nullptr,
+        nullptr
     );
+
+    std::string string(cstring);
+
+    delete[] cstring;
 
     return string;
 }
@@ -498,22 +508,26 @@ std::wstring Window::Impl::stringToWideString(const std::string& string) {
     int wlength = MultiByteToWideChar(
         CP_UTF8,
         0,
-        string.c_str(),
+        reinterpret_cast<LPCCH>(string.c_str()),
         -1,
-        NULL,
+        nullptr,
         0
     );
 
-    std::wstring wstring(wlength - 1, 0);
+    wchar_t* cwstring = new wchar_t[wlength];
 
     MultiByteToWideChar(
         CP_UTF8,
         0,
-        string.c_str(),
+        reinterpret_cast<LPCCH>(string.c_str()),
         -1,
-        (LPWSTR)wstring.c_str(),
+        reinterpret_cast<LPWSTR>(cwstring),
         wlength
     );
+
+    std::wstring wstring(cwstring);
+
+    delete[] cwstring;
 
     return wstring;
 }
