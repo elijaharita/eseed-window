@@ -21,7 +21,7 @@ Hello everyone. This project is my second library, and began as a part of my gam
 ## Features
 - Current supported platforms
   - Win32
-  - *X11 (in development)*
+  - X11
 - Current supported rendering APIs
   - Vulkan
 - Input handling
@@ -188,5 +188,15 @@ int main() {
     }
 
     ...
+    
+    instance.destroySurfaceKHR(surface);
+
+    // Important!
+    // Close the window after destroying the surface but before destroying the
+    // instance
+    // Some platforms will give segmentation fault if this is performed out of order
+    window.close();
+    
+    instance.destroy();
 }
 ```
