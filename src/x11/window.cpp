@@ -57,10 +57,13 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
         impl->display, 
         impl->window, 
         ExposureMask 
-            | KeyPressMask 
+            | KeyPressMask
             | KeyReleaseMask
             | StructureNotifyMask
             | PointerMotionMask
+            | ButtonPressMask
+            | ButtonReleaseMask
+            | ButtonMotionMask
     );
     XMapWindow(impl->display, impl->window);
 
@@ -69,6 +72,7 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
     impl->WM_DELETE_WINDOW = XInternAtom(impl->display, "WM_DELETE_WINDOW", False);
     impl->_NET_WM_NAME = XInternAtom(impl->display, "_NET_WM_NAME", False);
     impl->_NET_WM_STATE_FULLSCREEN = XInternAtom(impl->display, "_NET_WM_STATE_FULLSCREEN", False);
+    impl->_NET_FRAME_EXTENTS = XInternAtom(impl->display, "_NET_FRAME_EXTENTS", False);
     impl->_NET_WM_STATE = XInternAtom(impl->display, "_NET_WM_STATE", False);
     impl->UTF8_STRING = XInternAtom(impl->display, "UTF8_STRING", False);
 
@@ -100,9 +104,43 @@ void esd::wnd::Window::poll() {
                 KeyEvent event;
                 event.down = xe.type == KeyPress;
                 event.key = impl->fromX11KeyCode(xe.xkey.keycode);
-                std::cout << "X11 Key Code: " << xe.xkey.keycode << std::endl;
                 keyHandler(event);
             }
+            break;
+        case ButtonPress:
+            // Scroll wheel event
+            if (xe.xbutton.button == Button4 || xe.xbutton.button == Button5) {
+                constexpr double delta = 1.0;
+                if (scrollHandler) {
+                    ScrollEvent event = {};
+                    if (xe.xbutton.button == Button4) event.vScroll = delta;
+                    else event.vScroll = -delta;
+                    scrollHandler(event);
+                }
+            }
+        
+        case ButtonRelease:
+            if (mouseButtonHandler) {
+                MouseButtonEvent event;
+                event.down = xe.type == ButtonPress;
+                switch (xe.xbutton.button) {
+                case Button1:
+                    event.button = MouseButton::LButton;
+                    break;
+                case Button2:
+                    event.button = MouseButton::MButton;
+                    break;
+                case Button3:
+                    event.button = MouseButton::RButton;
+                    break;
+                default:
+                    event.button = MouseButton::Unknown;
+                }
+
+                if (event.button != MouseButton::Unknown)
+                    mouseButtonHandler(event);
+            }
+            break;
         case ClientMessage:
             {
                 if ((Atom)xe.xclient.data.l[0] == impl->WM_DELETE_WINDOW) {
@@ -118,6 +156,7 @@ void esd::wnd::Window::poll() {
 }
 
 void esd::wnd::Window::waitEvents() {
+
     // Wait for an event to become available
     XEvent xe;
     XPeekEvent(impl->display, &xe);
@@ -142,7 +181,7 @@ std::string esd::wnd::Window::getTitle() {
         0UL,
         0UL,
         False,
-        impl->UTF8_STRING,
+        AnyPropertyType,
         &actualType,
         &actualFormat,
         &nItems,
@@ -159,7 +198,7 @@ std::string esd::wnd::Window::getTitle() {
         0UL,
         (bytesAfter + 3UL) / 4UL, // Divide by four and round up
         False,
-        impl->UTF8_STRING,
+        AnyPropertyType,
         &actualType,
         &actualFormat,
         &nItems,
@@ -209,7 +248,31 @@ WindowPos esd::wnd::Window::getPos() {
 }
 
 void esd::wnd::Window::setPos(WindowPos pos) {
-    XMoveWindow(impl->display, impl->window, pos.x, pos.y);
+
+    Atom actualType;
+    int actualFormat;
+    unsigned long nitems;
+    unsigned long bytesAfter;
+    unsigned long* prop;
+    
+    XGetWindowProperty(
+        impl->display,
+        impl->window,
+        impl->_NET_FRAME_EXTENTS,
+        0,
+        sizeof(unsigned long) * 4,
+        False,
+        AnyPropertyType,
+        &actualType,
+        &actualFormat,
+        &nitems,
+        &bytesAfter,
+        (unsigned char**)&prop
+    );
+    
+    XMoveWindow(impl->display, impl->window, pos.x - prop[0], pos.y - prop[2]);
+
+    XFree(prop);
 }
 
 bool esd::wnd::Window::isCloseRequested() {
@@ -242,7 +305,7 @@ bool esd::wnd::Window::isFullscreen() {
             propertyIndex * sizeof(Atom),
             sizeof(Atom),
             False,
-            XA_ATOM,
+            AnyPropertyType,
             &actualType,
             &actualFormat,
             &nitems,
@@ -386,7 +449,32 @@ void esd::wnd::Window::setCursorScreenPos(CursorPos pos) {
 }
 
 bool esd::wnd::Window::isMouseButtonDown(MouseButton button) {
-    return false;
+    ::Window child, root;
+    int rootX, rootY;
+    int winX, winY;
+    unsigned int mask;
+    
+    XQueryPointer(
+        impl->display, 
+        impl->window, 
+        &child,
+        &root,
+        &rootX,
+        &rootY,
+        &winX,
+        &winY,
+        &mask
+    );
+
+    if (button == MouseButton::LButton) return mask & Button1Mask;
+    if (button == MouseButton::MButton) return mask & Button2Mask;
+    if (button == MouseButton::RButton) return mask & Button3Mask;
+
+    // TODO: detect mouse button 4 & 5
+    if (button == MouseButton::XButton1) return false;
+    if (button == MouseButton::XButton2) return false;
+
+    throw std::runtime_error("Unknown mouse button");
 }
 
 Key esd::wnd::Window::Impl::fromX11KeyCode(unsigned int x11KeyCode) {
@@ -419,7 +507,7 @@ void esd::wnd::Window::Impl::initKeyTables() {
                 found = true;
                 break;
             }
-        }   
+        }
         
         // Any character with no corresponding esd key will be set to unknown
         if (!found) esdKeyTable[x11KeyCode] = Key::Unknown;

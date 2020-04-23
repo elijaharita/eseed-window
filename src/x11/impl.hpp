@@ -33,6 +33,8 @@ public:
     Atom WM_DELETE_WINDOW;
     Atom _NET_WM_NAME;
     Atom _NET_WM_STATE_FULLSCREEN;
+    Atom _NET_FRAME_EXTENTS;
+    Atom _NET_MOVERESIZE_WINDOW;
     Atom _NET_WM_STATE;
     Atom UTF8_STRING;
     constexpr static Atom _NET_WM_STATE_REMOVE = 0;
