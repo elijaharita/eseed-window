@@ -65,13 +65,15 @@ Hello everyone. This project is my second library, and began as a part of my gam
 ## Ghetto temporary documentation
 
 ### Basics
-Currently, the only supported rendering API is Vulkan, and the only supported platform is Win32. When more platforms are added, effective usage should be exactly the same and completely platform-independent.
+At the moment, the only supported rendering API is Vulkan. The library is currently implemented for Win32 and X11.
 
 Windows are created with a simple constructor taking a title and size. This may be expanded with additional optional parameters in the future.
 
 After the window has been created, events need to be checked periodically. This can be accomplished either with `.poll()` or `.waitEvents()`. Polling immediately processes 0 or more messages, and is useful for games and other applications that have a continuously updated event loop. However, GUI applications that don't need to be updated until input is received can simply wait until one or more new events are available, and let the CPU rest in the meantime.  
 
 When the window class goes out of scope or is destroyed, the window itself will be freed and destroyed automatically.
+
+The window can be closed early using `.close()`. When using Vulkan, the window must be closed after the surface, and before the instance. A window that has been closed cannot be used again unless it is reinitialized.
 
 ```cpp
 #include <eseed/window/window.hpp>
