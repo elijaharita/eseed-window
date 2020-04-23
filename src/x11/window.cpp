@@ -23,7 +23,6 @@
 #include <eseed/window/window.hpp>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
-#include <iostream>
 #include <cstring>
 
 using namespace esd::wnd;
@@ -52,6 +51,25 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
     );
 
     impl->initKeyTables();
+
+    XSetLocaleModifiers("");
+    impl->im = XOpenIM(impl->display, nullptr, nullptr, nullptr);
+
+    if (!impl->im) {
+        XSetLocaleModifiers("@im=none");
+        impl->im = XOpenIM(impl->display, nullptr, nullptr, nullptr);    
+    }
+
+    impl->ic = XCreateIC(
+        impl->im,
+        XNInputStyle,
+        XIMPreeditNothing | XIMStatusNothing,
+        XNClientWindow,
+        impl->window,
+        XNFocusWindow,
+        impl->window,
+        nullptr
+    );
     
     XSelectInput(
         impl->display, 
@@ -88,6 +106,8 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
 }
 
 esd::wnd::Window::~Window() {
+    XFree(impl->ic);
+    XFree(impl->im);
     XCloseDisplay(impl->display);
 }
 
@@ -99,6 +119,39 @@ void esd::wnd::Window::poll() {
 
         switch (xe.type) {
         case KeyPress:
+            if (keyCharHandler) {
+                if (!XFilterEvent(&xe, None)) {
+                    Status status;
+                    KeySym keySym;
+                    char utf8[4];
+                    Xutf8LookupString(impl->ic, &xe.xkey, utf8, 4, &keySym, &status);
+
+                    KeyCharEvent event = {};
+
+                    // Convert UTF-8 to code point
+                    if ((utf8[0] & 0x80) == 0x00) {
+                        event.codePoint = utf8[0];
+                    } else if ((utf8[0] & 0xE0) == 0xC0) {
+                        event.codePoint 
+                            = (utf8[0] & 0x1F) << 6
+                            | (utf8[1] & 0x3F);
+                    } else if ((utf8[2] & 0xF0) == 0xE0) {
+                        event.codePoint 
+                            = (utf8[0] & 0x0F) << 12
+                            | (utf8[1] & 0x3F) << 6
+                            | (utf8[2] & 0x3F);
+                    } else if ((utf8[0] & 0xF8) == 0xF0) {
+                        event.codePoint 
+                            = (utf8[0] & 0x07) << 18
+                            | (utf8[1] & 0x3F) << 12
+                            | (utf8[2] & 0x3F) << 6
+                            | (utf8[3] & 0x3F);
+                    }
+
+                    if (event.codePoint != 0)
+                        keyCharHandler(event);
+                }
+            }
         case KeyRelease:
             if (keyHandler) {
                 KeyEvent event;
@@ -108,7 +161,7 @@ void esd::wnd::Window::poll() {
             }
             break;
         case ButtonPress:
-            // Scroll wheel event
+            // Scroll wheel event (press only)
             if (xe.xbutton.button == Button4 || xe.xbutton.button == Button5) {
                 constexpr double delta = 1.0;
                 if (scrollHandler) {
@@ -117,8 +170,8 @@ void esd::wnd::Window::poll() {
                     else event.vScroll = -delta;
                     scrollHandler(event);
                 }
+                break;
             }
-        
         case ButtonRelease:
             if (mouseButtonHandler) {
                 MouseButtonEvent event;
@@ -141,6 +194,19 @@ void esd::wnd::Window::poll() {
                     mouseButtonHandler(event);
             }
             break;
+        case MotionNotify:
+            if (cursorMoveHandler) {
+                CursorMoveEvent event;
+                event.pos = { 
+                    (double)xe.xmotion.x, 
+                    (double)xe.xmotion.y 
+                };
+                event.screenPos = { 
+                    (double)xe.xmotion.x_root, 
+                    (double)xe.xmotion.y_root 
+                };
+                cursorMoveHandler(event);
+            }
         case ClientMessage:
             {
                 if ((Atom)xe.xclient.data.l[0] == impl->WM_DELETE_WINDOW) {
@@ -165,7 +231,6 @@ void esd::wnd::Window::waitEvents() {
     poll();
 }
 
-// TODO: Avoid unnecessary allocation
 std::string esd::wnd::Window::getTitle() {
 
     Atom actualType;

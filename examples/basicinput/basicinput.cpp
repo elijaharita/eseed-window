@@ -59,8 +59,8 @@ int main() {
         std::cout 
             << "Mouse button " 
             << (int)e.button
-            << (e.down ? "pressed" : "released")
             << " "
+            << (e.down ? "pressed" : "released")
             << std::endl;
     };
 

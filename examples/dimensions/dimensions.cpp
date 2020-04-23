@@ -31,8 +31,6 @@ int main() {
 
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         if (e.down) {
-            std::cout << esd::wnd::getKeyName(e.key) << std::endl;
-            
             // F11: Toggle fullscreen
             if (e.key == esd::wnd::Key::F11) {
                 window.setFullscreen(!window.isFullscreen());

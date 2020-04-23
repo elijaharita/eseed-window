@@ -30,6 +30,8 @@ public:
     ::Window root;
     ::Window window;
     bool closeRequested;
+    XIM im;
+    XIC ic;
     Atom WM_DELETE_WINDOW;
     Atom _NET_WM_NAME;
     Atom _NET_WM_STATE_FULLSCREEN;

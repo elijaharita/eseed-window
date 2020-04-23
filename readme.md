@@ -12,13 +12,11 @@ Hello everyone. This project is my second library, and began as a part of my gam
 **This project is currently in active development and some interface features may break at any time until this notice is removed**
 
 ## Known quirks / issues
-- Win32
-  - Cursor movement callback not triggered when outside of window
-- X11
+#### X11
   - Shift key does not repeat like other keys
     - Repeat key presses may be disabled on all platforms, that's the purpose of the character callback
-  - Print Screen does not seem to be detected
-  - `.setPosition(...)` sets the window position relative to the full decorated window, not the client area
+  - Print Screen and Meta keys do not seem to be detected
+  - Button 4 & 5 currently not readable
 
 ## Features
 - Current supported platforms
@@ -55,6 +53,11 @@ Hello everyone. This project is my second library, and began as a part of my gam
   - Mouse capturing
   - Controllers / gamepads
   - Additional (needs more research)
+- More callbacks
+  - Resize
+  - Reposition
+  - Window close
+  - etc.
 - Thread safety
 - Sound? (possible)
 - Anything else as it comes along :)
