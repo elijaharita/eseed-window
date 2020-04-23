@@ -92,7 +92,12 @@ Window::Window(
 }
 
 Window::~Window() {
-    if (impl->hWnd) DestroyWindow(impl->hWnd);
+    if (impl->hWnd) close();
+}
+
+void Window::close() {
+    DestroyWindow(impl->hWnd);
+    impl->hWnd = nullptr;
 }
 
 void Window::poll() {

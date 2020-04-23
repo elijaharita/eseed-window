@@ -45,6 +45,7 @@ vk::SurfaceKHR VulkanWindow::createSurface(const vk::Instance& instance) {
 
 VkSurfaceKHR VulkanWindow::createSurface(const VkInstance& instance) {
     VkWin32SurfaceCreateInfoKHR ci = {};
+    ci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     ci.hwnd = impl->hWnd;
     ci.hinstance = impl->hInstance;
     
