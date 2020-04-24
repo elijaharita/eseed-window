@@ -35,7 +35,7 @@ vk::ShaderModule loadShaderModule(vk::Device device, std::string path) {
     while (true) {
         
         uint32_t i = 0;
-        file.read((char*)&i, 4);
+        file.read(reinterpret_cast<char*>(&i), 4);
 
         if (file.eof()) break;
 
@@ -57,9 +57,6 @@ int main() {
     window.keyHandler = [&](esd::wnd::KeyEvent e) {
         // Close window when Escape is pressed
         if (e.key == Key::Esc) window.setCloseRequested(true);
-
-        // Toggle fullscreen when F11 is pressed
-        if (e.key == Key::F11) window.setFullscreen(!window.isFullscreen());
     };
 
     // CREATE INSTANCE
@@ -71,9 +68,9 @@ int main() {
         vk::enumerateInstanceExtensionProperties();
 
     auto instanceCi = vk::InstanceCreateInfo()
-        .setEnabledExtensionCount((uint32_t)instanceExtensions.size())
+        .setEnabledExtensionCount(static_cast<uint32_t>(instanceExtensions.size()))
         .setPpEnabledExtensionNames(instanceExtensions.data())
-        .setEnabledLayerCount((uint32_t)instanceLayers.size())
+        .setEnabledLayerCount(static_cast<uint32_t>(instanceLayers.size()))
         .setPpEnabledLayerNames(instanceLayers.data());
         
     auto instance = vk::createInstance(instanceCi);
@@ -125,9 +122,9 @@ int main() {
     
     auto device = physicalDevice.createDevice(
         vk::DeviceCreateInfo()
-            .setEnabledExtensionCount((uint32_t)deviceExtensions.size())
+            .setEnabledExtensionCount(static_cast<uint32_t>(deviceExtensions.size()))
             .setPpEnabledExtensionNames(deviceExtensions.data())
-            .setQueueCreateInfoCount((uint32_t)queueCis.size())
+            .setQueueCreateInfoCount(static_cast<uint32_t>(queueCis.size()))
             .setPQueueCreateInfos(queueCis.data())        
     );
 
@@ -139,7 +136,10 @@ int main() {
             .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
             .setImageArrayLayers(1)
             .setImageColorSpace(surfaceFormat.colorSpace)
-            .setImageExtent({ (uint32_t)window.getSize().w, (uint32_t)window.getSize().h })
+            .setImageExtent({ 
+                static_cast<uint32_t>(window.getSize().w), 
+                static_cast<uint32_t>(window.getSize().h) 
+            })
             .setImageFormat(surfaceFormat.format)
             .setImageSharingMode(vk::SharingMode::eExclusive)
             .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
@@ -178,15 +178,15 @@ int main() {
     renderPassSubpasses.push_back(
         vk::SubpassDescription()
             .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-            .setColorAttachmentCount((uint32_t)mainSubpassColorAttachments.size())
+            .setColorAttachmentCount(static_cast<uint32_t>(mainSubpassColorAttachments.size()))
             .setPColorAttachments(mainSubpassColorAttachments.data())
     );
     
     auto renderPass = device.createRenderPass(
         vk::RenderPassCreateInfo()
-            .setAttachmentCount((uint32_t)renderPassAttachments.size())
+            .setAttachmentCount(static_cast<uint32_t>(renderPassAttachments.size()))
             .setPAttachments(renderPassAttachments.data())
-            .setSubpassCount((uint32_t)renderPassSubpasses.size())
+            .setSubpassCount(static_cast<uint32_t>(renderPassSubpasses.size()))
             .setPSubpasses(renderPassSubpasses.data())
     );
     
@@ -235,44 +235,50 @@ int main() {
             .setRenderPass(renderPass)
             .setSubpass(0)
             .setLayout(pipelineLayout)
-            .setPColorBlendState(&vk::PipelineColorBlendStateCreateInfo()
-                .setAttachmentCount((uint32_t)colorBlendAttachments.size())
-                .setPAttachments(colorBlendAttachments.data())
+            .setPColorBlendState(
+                &vk::PipelineColorBlendStateCreateInfo()
+                    .setAttachmentCount(static_cast<uint32_t>(colorBlendAttachments.size()))
+                    .setPAttachments(colorBlendAttachments.data())
             )
-            .setPInputAssemblyState(&vk::PipelineInputAssemblyStateCreateInfo()
-                .setPrimitiveRestartEnable(false)
-                .setTopology(vk::PrimitiveTopology::eTriangleList)
+            .setPInputAssemblyState(
+                &vk::PipelineInputAssemblyStateCreateInfo()
+                    .setPrimitiveRestartEnable(false)
+                    .setTopology(vk::PrimitiveTopology::eTriangleList)
             )
-            .setPMultisampleState(&vk::PipelineMultisampleStateCreateInfo()
-                .setRasterizationSamples(vk::SampleCountFlagBits::e1)
+            .setPMultisampleState(
+                &vk::PipelineMultisampleStateCreateInfo()
+                    .setRasterizationSamples(vk::SampleCountFlagBits::e1)
             )
-            .setPRasterizationState(&vk::PipelineRasterizationStateCreateInfo()
-                .setLineWidth(1)
-                .setFrontFace(vk::FrontFace::eClockwise)
-                .setCullMode(vk::CullModeFlagBits::eBack)
-                .setPolygonMode(vk::PolygonMode::eFill)
+            .setPRasterizationState(
+                &vk::PipelineRasterizationStateCreateInfo()
+                    .setLineWidth(1)
+                    .setFrontFace(vk::FrontFace::eClockwise)
+                    .setCullMode(vk::CullModeFlagBits::eBack)
+                    .setPolygonMode(vk::PolygonMode::eFill)
             )
-            .setStageCount((uint32_t)shaderStages.size())
+            .setStageCount(static_cast<uint32_t>(shaderStages.size()))
             .setPStages(shaderStages.data())
-            .setPVertexInputState(&vk::PipelineVertexInputStateCreateInfo()
-                .setVertexAttributeDescriptionCount(0)
-                .setVertexBindingDescriptionCount(0)
+            .setPVertexInputState(
+                &vk::PipelineVertexInputStateCreateInfo()
+                    .setVertexAttributeDescriptionCount(0)
+                    .setVertexBindingDescriptionCount(0)
             )
-            .setPViewportState(&vk::PipelineViewportStateCreateInfo()
-                .setScissorCount(1)
-                .setPScissors(&vk::Rect2D()
-                    .setExtent({
-                        (uint32_t)window.getSize().w, 
-                        (uint32_t)window.getSize().h 
-                    })
-                )
-                .setViewportCount(1)
-                .setPViewports(&vk::Viewport()
-                    .setWidth((float)window.getSize().w)
-                    .setHeight((float)window.getSize().h)
-                    .setMinDepth(0)
-                    .setMaxDepth(1)
-                )
+            .setPViewportState(
+                &vk::PipelineViewportStateCreateInfo()
+                    .setScissorCount(1)
+                    .setPScissors(&vk::Rect2D()
+                        .setExtent({
+                            static_cast<uint32_t>(window.getSize().w), 
+                            static_cast<uint32_t>(window.getSize().h) 
+                        })
+                    )
+                    .setViewportCount(1)
+                    .setPViewports(&vk::Viewport()
+                        .setWidth(static_cast<float>(window.getSize().w))
+                        .setHeight(static_cast<float>(window.getSize().h))
+                        .setMinDepth(0)
+                        .setMaxDepth(1)
+                    )
             )
     );
 
@@ -292,12 +298,13 @@ int main() {
                 })
                 .setFormat(vk::Format::eB8G8R8A8Unorm)
                 .setImage(swapchainImages[i])
-                .setSubresourceRange(vk::ImageSubresourceRange()
-                    .setAspectMask(vk::ImageAspectFlagBits::eColor)
-                    .setBaseArrayLayer(0)
-                    .setBaseMipLevel(0)
-                    .setLayerCount(1)
-                    .setLevelCount(1)
+                .setSubresourceRange(
+                    vk::ImageSubresourceRange()
+                        .setAspectMask(vk::ImageAspectFlagBits::eColor)
+                        .setBaseArrayLayer(0)
+                        .setBaseMipLevel(0)
+                        .setLayerCount(1)
+                        .setLevelCount(1)
                 )
                 .setViewType(vk::ImageViewType::e2D)
         );
@@ -327,7 +334,7 @@ int main() {
     std::vector<vk::CommandBuffer> commandBuffers = 
         device.allocateCommandBuffers(
             vk::CommandBufferAllocateInfo()
-                .setCommandBufferCount((uint32_t)swapchainImageViews.size())
+                .setCommandBufferCount(static_cast<uint32_t>(swapchainImageViews.size()))
                 .setCommandPool(commandPool)
                 .setLevel(vk::CommandBufferLevel::ePrimary)
         );
@@ -342,20 +349,18 @@ int main() {
                         .setFloat32({0.f, 0.f, 0.f, 1.f})
                     )
                 )
-                .setRenderArea(vk::Rect2D()
-                    .setExtent({ 
-                        (uint32_t)window.getSize().w, 
-                        (uint32_t)window.getSize().h 
-                    })
+                .setRenderArea(
+                    vk::Rect2D()
+                        .setExtent({ 
+                            static_cast<uint32_t>(window.getSize().w), 
+                            static_cast<uint32_t>(window.getSize().h) 
+                        })
                 )
                 .setRenderPass(renderPass)
                 .setFramebuffer(framebuffers[i]),
             vk::SubpassContents::eInline
         );
-        commandBuffers[i].bindPipeline(
-            vk::PipelineBindPoint::eGraphics, 
-            pipeline
-        );
+        commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
         commandBuffers[i].draw(3, 1, 0, 0);
         commandBuffers[i].endRenderPass();
         commandBuffers[i].end();
