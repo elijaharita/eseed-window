@@ -17,7 +17,7 @@ int main() {
     std::string text = "Start typing!";
     
     // Handles raw key presses and releases
-    window.keyHandler = [&](esd::wnd::KeyEvent e) {
+    window.setKeyHandler([&](esd::wnd::KeyEvent e) {
         
         // Only handle key down events, key up can be intercepted by checking 
         // for !e.down (or just an else statement)
@@ -30,11 +30,11 @@ int main() {
             if (e.key == Key::Esc)
                 window.setCloseRequested(true);
         }
-    };
+    });
 
     // Handles interpreted character input 
     // (Shift + "1" causes "!" on US keyboard, etc.)
-    window.keyCharHandler = [&](esd::wnd::KeyCharEvent e) {
+    window.setKeyCharHandler([&](esd::wnd::KeyCharEvent e) {
 
         // If the code point is ASCII BS (backspace), specially remove a 
         // character
@@ -44,35 +44,35 @@ int main() {
         else text += codePointToUtf8(e.codePoint);
 
         window.setTitle(cursorPosString + " | " + text);
-    };
+    });
 
     // Displays the cursor window coordinates in the beginning of the title
-    window.cursorMoveHandler = [&](esd::wnd::CursorMoveEvent e) {
+    window.setCursorMoveHandler([&](esd::wnd::CursorMoveEvent e) {
         cursorPosString = "Cursor Pos: " 
             + std::to_string(e.pos.x) 
             + " : " 
             + std::to_string(e.pos.y);
 
         window.setTitle(cursorPosString + " | " + text);
-    };
+    });
 
     // Print mouse button press and release events to the console
-    window.mouseButtonHandler = [&](esd::wnd::MouseButtonEvent e) {
+    window.setMouseButtonHandler([&](esd::wnd::MouseButtonEvent e) {
         std::cout 
             << "Mouse button " 
             << static_cast<int>(e.button)
             << " "
             << (e.down ? "pressed" : "released")
             << std::endl;
-    };
+    });
 
     // Move window based on scroll
-    window.scrollHandler = [&](esd::wnd::ScrollEvent e) {
+    window.setScrollHandler([&](esd::wnd::ScrollEvent e) {
         auto pos = window.getPos();
         pos.x += static_cast<int>(e.hScroll * 30);
         pos.y -= static_cast<int>(e.vScroll * 30);
         window.setPos(pos);
-    };
+    });
 
     // Check for window updates until the close button is pressed
     while (!window.isCloseRequested()) {

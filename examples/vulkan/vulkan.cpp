@@ -54,10 +54,10 @@ vk::ShaderModule loadShaderModule(vk::Device device, std::string path) {
 int main() {
     esd::wnd::VulkanWindow window("ウィンドウ", { 1366, 768 });
 
-    window.keyHandler = [&](esd::wnd::KeyEvent e) {
+    window.setKeyHandler([&](esd::wnd::KeyEvent e) {
         // Close window when Escape is pressed
         if (e.key == Key::Esc) window.setCloseRequested(true);
-    };
+    });
 
     // CREATE INSTANCE
 

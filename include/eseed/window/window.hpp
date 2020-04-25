@@ -40,14 +40,14 @@ struct ScrollEvent { double vScroll, hScroll; };
 
 class Window {
 public:
-    std::function<void(KeyEvent)> keyHandler;
-    std::function<void(KeyCharEvent)> keyCharHandler;
-    std::function<void(CursorMoveEvent)> cursorMoveHandler;
-    std::function<void(MouseButtonEvent)> mouseButtonHandler;
-    std::function<void(ScrollEvent)> scrollHandler;
-
     Window(std::string title, WindowSize size, std::optional<WindowPos> pos = std::nullopt);
     ~Window();
+
+    void setKeyHandler(std::function<void(KeyEvent)> handler) { keyHandler = handler; }
+    void setKeyCharHandler(std::function<void(KeyCharEvent)> handler) { keyCharHandler = handler; }
+    void setCursorMoveHandler(std::function<void(CursorMoveEvent)> handler) { cursorMoveHandler = handler; }
+    void setMouseButtonHandler(std::function<void(MouseButtonEvent)> handler) { mouseButtonHandler = handler; }
+    void setScrollHandler(std::function<void(ScrollEvent)> handler) { scrollHandler = handler; }
 
     // Close the window and release all resources
     // The window cannot be used again after this call
@@ -93,6 +93,12 @@ protected:
     // and additional functions
     class Impl;
     std::unique_ptr<Impl> impl;
+
+    std::function<void(KeyEvent)> keyHandler;
+    std::function<void(KeyCharEvent)> keyCharHandler;
+    std::function<void(CursorMoveEvent)> cursorMoveHandler;
+    std::function<void(MouseButtonEvent)> mouseButtonHandler;
+    std::function<void(ScrollEvent)> scrollHandler;
 };
 
 }
