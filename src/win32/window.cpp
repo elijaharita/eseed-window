@@ -488,7 +488,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
                 break;
             }
         }
-        break;
+        return 0;
     
     // Repaint the window white when it's been invalidated
     case WM_PAINT:
