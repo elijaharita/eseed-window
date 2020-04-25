@@ -352,6 +352,17 @@ LRESULT CALLBACK Window::Impl::wndProc(
             window->resizeHandler(event);
         }
 
+        return 0;
+
+    case WM_MOVE:
+        if (window->moveHandler) {
+            MoveEvent event;
+            event.pos = { static_cast<short>(LOWORD(lParam)), static_cast<short>(HIWORD(lParam)) };
+            window->moveHandler(event);
+        }
+
+        return 0;
+
     case WM_CHAR:
         if (window->keyCharHandler) {
             KeyCharEvent event;

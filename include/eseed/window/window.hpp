@@ -53,6 +53,7 @@ public:
     void setMouseButtonHandler(std::function<void(MouseButtonEvent)> handler) { mouseButtonHandler = handler; }
     void setScrollHandler(std::function<void(ScrollEvent)> handler) { scrollHandler = handler; }
     void setResizeHandler(std::function<void(ResizeEvent)> handler) { resizeHandler = handler; }
+    void setMoveHandler(std::function<void(MoveEvent)> handler) { moveHandler = handler; }
 
     // Close the window and release all resources
     // The window cannot be used again after this call

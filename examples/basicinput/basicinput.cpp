@@ -80,6 +80,10 @@ int main() {
         window.setTitle(cursorPosString + " | " + text);
     });
 
+    window.setMoveHandler([&](esd::wnd::MoveEvent e) {
+        std::cout << "moved " << e.pos.x << " : " << e.pos.y << std::endl;
+    });
+
     // Check for window updates until the close button is pressed
     while (!window.isCloseRequested()) {
         window.waitEvents();
