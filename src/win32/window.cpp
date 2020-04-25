@@ -341,23 +341,26 @@ LRESULT CALLBACK Window::Impl::wndProc(
 
     switch (uMsg) {
 
-    // Signal close request
     case WM_CLOSE:
         window->impl->closeRequested = true;
-
-        // Override default close behavior
         return 0;
 
-    // Signal key character callback
+    case WM_SIZE:
+        if (window->resizeHandler) {
+            ResizeEvent event;
+            event.size = { LOWORD(lParam), HIWORD(lParam) };
+            window->resizeHandler(event);
+        }
+
     case WM_CHAR:
         if (window->keyCharHandler) {
             KeyCharEvent event;
             event.codePoint = static_cast<char32_t>(wParam);
             window->keyCharHandler(event);
         }
-        break;
+        
+        return 0;
 
-    // Signal cursor move callback
     case WM_MOUSEMOVE:
         if (window->cursorMoveHandler) {
             CursorMoveEvent event;
@@ -369,12 +372,35 @@ LRESULT CALLBACK Window::Impl::wndProc(
             // Convert the point to screen space and store in event
             ClientToScreen(window->impl->hWnd, &point);
             event.screenPos = { static_cast<double>(point.x), static_cast<double>(point.y) };
+
+            // If the cursor was previously out of the window, it just entered
+            event.entered = !window->impl->cursorInWindow;
             
             window->cursorMoveHandler(event);
         }
-        break;
+
+        // If cursor just entered the window, start tracking for next exit
+        if (!window->impl->cursorInWindow) {
+            window->impl->cursorInWindow = true;
+
+            TRACKMOUSEEVENT tme;
+            tme.cbSize = sizeof(tme);
+            tme.hwndTrack = window->impl->hWnd;
+            tme.dwFlags = TME_LEAVE;
+            
+            TrackMouseEvent(&tme);
+        }
+        
+        return 0;
     
-    // Signal mouse wheel callback
+    case WM_MOUSELEAVE:
+        window->impl->cursorInWindow = false;
+        if (window->cursorExitHandler) {
+            window->cursorExitHandler({});
+        }
+
+        return 0;
+    
     case WM_MOUSEWHEEL:
         if (window->scrollHandler) {
             ScrollEvent event;
@@ -382,6 +408,7 @@ LRESULT CALLBACK Window::Impl::wndProc(
             event.hScroll = 0;
             window->scrollHandler(event);
         }
+
         return 0;
 
     case WM_LBUTTONDOWN:

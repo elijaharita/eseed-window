@@ -34,9 +34,12 @@ struct CursorPos { double x, y; };
 
 struct KeyEvent { Key key; bool down; };
 struct KeyCharEvent { char32_t codePoint; };
-struct CursorMoveEvent { CursorPos pos; CursorPos screenPos; };
+struct CursorMoveEvent { CursorPos pos; CursorPos screenPos; bool entered; };
+struct CursorExitEvent {};
 struct MouseButtonEvent { MouseButton button; bool down; };
 struct ScrollEvent { double vScroll, hScroll; };
+struct ResizeEvent { WindowSize size; };
+struct MoveEvent { WindowPos pos; };
 
 class Window {
 public:
@@ -46,8 +49,10 @@ public:
     void setKeyHandler(std::function<void(KeyEvent)> handler) { keyHandler = handler; }
     void setKeyCharHandler(std::function<void(KeyCharEvent)> handler) { keyCharHandler = handler; }
     void setCursorMoveHandler(std::function<void(CursorMoveEvent)> handler) { cursorMoveHandler = handler; }
+    void setCursorExitHandler(std::function<void(CursorExitEvent)> handler) { cursorExitHandler = handler; }
     void setMouseButtonHandler(std::function<void(MouseButtonEvent)> handler) { mouseButtonHandler = handler; }
     void setScrollHandler(std::function<void(ScrollEvent)> handler) { scrollHandler = handler; }
+    void setResizeHandler(std::function<void(ResizeEvent)> handler) { resizeHandler = handler; }
 
     // Close the window and release all resources
     // The window cannot be used again after this call
@@ -97,8 +102,11 @@ protected:
     std::function<void(KeyEvent)> keyHandler;
     std::function<void(KeyCharEvent)> keyCharHandler;
     std::function<void(CursorMoveEvent)> cursorMoveHandler;
+    std::function<void(CursorExitEvent)> cursorExitHandler;
     std::function<void(MouseButtonEvent)> mouseButtonHandler;
     std::function<void(ScrollEvent)> scrollHandler;
+    std::function<void(ResizeEvent)> resizeHandler;
+    std::function<void(MoveEvent)> moveHandler;
 };
 
 }

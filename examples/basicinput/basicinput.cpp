@@ -74,6 +74,12 @@ int main() {
         window.setPos(pos);
     });
 
+    window.setCursorExitHandler([&](esd::wnd::CursorExitEvent e) {
+        cursorPosString = "Cursor out of window!";
+
+        window.setTitle(cursorPosString + " | " + text);
+    });
+
     // Check for window updates until the close button is pressed
     while (!window.isCloseRequested()) {
         window.waitEvents();

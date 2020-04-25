@@ -28,8 +28,9 @@ class esd::wnd::Window::Impl {
 public:
     HINSTANCE hInstance;
     HWND hWnd;
-    WINDOWPLACEMENT windowedPlacement;
+    WINDOWPLACEMENT windowedPlacement; // For caching non-fullscreen dimensions
     bool closeRequested;
+    bool cursorInWindow;
     
     // Convert window client dimensions to Win32 window RECT
     RECT createWindowRect(WindowSize size, WindowPos pos = {});
