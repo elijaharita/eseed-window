@@ -79,6 +79,7 @@ esd::wnd::Window::Window(std::string title, WindowSize size, std::optional<Windo
             | KeyReleaseMask
             | StructureNotifyMask
             | PointerMotionMask
+            | LeaveWindowMask
             | ButtonPressMask
             | ButtonReleaseMask
             | ButtonMotionMask
@@ -158,6 +159,7 @@ void esd::wnd::Window::poll() {
                         keyCharHandler(event);
                 }
             }
+            // no break
         case KeyRelease:
             if (keyHandler) {
                 KeyEvent event;
@@ -178,6 +180,7 @@ void esd::wnd::Window::poll() {
                 }
                 break;
             }
+            // no break
         case ButtonRelease:
             if (mouseButtonHandler) {
                 MouseButtonEvent event;
@@ -211,7 +214,18 @@ void esd::wnd::Window::poll() {
                     (double)xe.xmotion.x_root, 
                     (double)xe.xmotion.y_root 
                 };
+
+                // The cursor has entered the window if it was previously out
+                event.entered = !impl->cursorInWindow;
+                
                 cursorMoveHandler(event);
+            }
+            impl->cursorInWindow = true;
+            break;
+        case LeaveNotify:
+            if (cursorExitHandler) {
+                impl->cursorInWindow = false;
+                cursorExitHandler({});
             }
         case ClientMessage:
             {
@@ -221,7 +235,31 @@ void esd::wnd::Window::poll() {
             }
             break;
         case ConfigureNotify:
-            // TODO: resize events
+            // Position changed
+            if (
+                moveHandler && (
+                    impl->lastConfigure.x != xe.xconfigure.x ||
+                    impl->lastConfigure.y != xe.xconfigure.y
+                )
+            ) {
+                MoveEvent event;
+                event.pos = { xe.xconfigure.x, xe.xconfigure.y };
+                moveHandler(event);
+            }
+
+            // Size changed
+            if (
+                resizeHandler && (
+                    impl->lastConfigure.width != xe.xconfigure.width ||
+                    impl->lastConfigure.height != xe.xconfigure.height
+                )
+            ) {
+                ResizeEvent event;
+                event.size = { xe.xconfigure.width, xe.xconfigure.height };
+                resizeHandler(event);
+            }
+
+            impl->lastConfigure = xe.xconfigure;
             break;
         }
     }

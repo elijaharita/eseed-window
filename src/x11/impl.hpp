@@ -30,6 +30,11 @@ public:
     ::Window root;
     ::Window window;
     bool closeRequested;
+    bool cursorInWindow;
+
+    // For finding which values (pos, size) changed since last time
+    XConfigureEvent lastConfigure;
+
     XIM im;
     XIC ic;
     Atom WM_DELETE_WINDOW;
