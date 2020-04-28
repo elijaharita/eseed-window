@@ -207,12 +207,12 @@ void esd::wnd::Window::poll() {
             if (cursorMoveHandler) {
                 CursorMoveEvent event;
                 event.pos = { 
-                    (double)xe.xmotion.x, 
-                    (double)xe.xmotion.y 
+                    static_cast<double>(xe.xmotion.x), 
+                    static_cast<double>(xe.xmotion.y) 
                 };
                 event.screenPos = { 
-                    (double)xe.xmotion.x_root, 
-                    (double)xe.xmotion.y_root 
+                    static_cast<double>(xe.xmotion.x_root), 
+                    static_cast<double>(xe.xmotion.y_root) 
                 };
 
                 // The cursor has entered the window if it was previously out
@@ -229,7 +229,7 @@ void esd::wnd::Window::poll() {
             }
         case ClientMessage:
             {
-                if ((Atom)xe.xclient.data.l[0] == impl->WM_DELETE_WINDOW) {
+                if (static_cast<Atom>(xe.xclient.data.l[0]) == impl->WM_DELETE_WINDOW) {
                     impl->closeRequested = true;
                 }
             }
@@ -505,7 +505,7 @@ CursorPos esd::wnd::Window::getCursorPos() {
         &mask
     );
 
-    return { (double)winX, (double)winY };
+    return { static_cast<double>(winX), static_cast<double>(winY) };
 }
 
 void esd::wnd::Window::setCursorPos(CursorPos pos) {
@@ -517,8 +517,8 @@ void esd::wnd::Window::setCursorPos(CursorPos pos) {
         0,
         0,
         0,
-        (int)pos.x,
-        (int)pos.y
+        static_cast<int>(pos.x),
+        static_cast<int>(pos.y)
     );
 }
 
@@ -540,7 +540,7 @@ CursorPos esd::wnd::Window::getCursorScreenPos() {
         &mask
     );
 
-    return { (double)rootX, (double)rootY };
+    return { static_cast<double>(rootX), static_cast<double>(rootY) };
 }
 
 void esd::wnd::Window::setCursorScreenPos(CursorPos pos) {
@@ -552,8 +552,8 @@ void esd::wnd::Window::setCursorScreenPos(CursorPos pos) {
         0,
         0,
         0,
-        (int)pos.x,
-        (int)pos.y
+        static_cast<int>(pos.x),
+        static_cast<int>(pos.y)
     );
 }
 
