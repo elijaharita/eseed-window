@@ -27,7 +27,7 @@
 
 using namespace esd::wnd;
 
-std::vector<const char*> VulkanWindow::getRequiredSurfaceInstanceExtensions() {
+std::vector<const char*> VulkanWindow::getRequiredSurfaceInstanceExtensions() const {
     return {
         VK_KHR_SURFACE_EXTENSION_NAME,
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME
@@ -35,7 +35,7 @@ std::vector<const char*> VulkanWindow::getRequiredSurfaceInstanceExtensions() {
 }
 
 #ifdef VULKAN_HPP
-vk::SurfaceKHR VulkanWindow::createSurface(const vk::Instance& instance) {
+vk::SurfaceKHR VulkanWindow::createSurface(const vk::Instance& instance) const {
     return instance.createWin32SurfaceKHR(vk::Win32SurfaceCreateInfoKHR()
         .setHwnd(impl->hWnd)
         .setHinstance(impl->hInstance)
@@ -43,7 +43,7 @@ vk::SurfaceKHR VulkanWindow::createSurface(const vk::Instance& instance) {
 }
 #endif
 
-VkSurfaceKHR VulkanWindow::createSurface(const VkInstance& instance) {
+VkSurfaceKHR VulkanWindow::createSurface(const VkInstance& instance) const {
     VkWin32SurfaceCreateInfoKHR ci = {};
     ci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     ci.hwnd = impl->hWnd;

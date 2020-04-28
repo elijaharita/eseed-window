@@ -38,15 +38,15 @@ public:
 
     // Get instance extensions required to create a Vulkan surface on the
     // current platform    
-    std::vector<const char*> getRequiredSurfaceInstanceExtensions();
+    std::vector<const char*> getRequiredSurfaceInstanceExtensions() const;
 
 // Only if the C++ bindings are included
 // (defined in vulkan/vulkan.hpp header)
 #ifdef VULKAN_HPP
-    vk::SurfaceKHR createSurface(const vk::Instance& instance);
+    vk::SurfaceKHR createSurface(const vk::Instance& instance) const;
 #endif
 
-    VkSurfaceKHR createSurface(const VkInstance& instance);
+    VkSurfaceKHR createSurface(const VkInstance& instance) const;
 };
 
 }

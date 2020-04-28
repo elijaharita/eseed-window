@@ -27,7 +27,7 @@
 
 using namespace esd::wnd;
 
-std::vector<const char*> VulkanWindow::getRequiredSurfaceInstanceExtensions() {
+std::vector<const char*> VulkanWindow::getRequiredSurfaceInstanceExtensions() const {
     return {
         VK_KHR_SURFACE_EXTENSION_NAME,
         VK_KHR_XLIB_SURFACE_EXTENSION_NAME
@@ -35,7 +35,7 @@ std::vector<const char*> VulkanWindow::getRequiredSurfaceInstanceExtensions() {
 }
 
 #ifdef VULKAN_HPP
-vk::SurfaceKHR VulkanWindow::createSurface(const vk::Instance& instance) {
+vk::SurfaceKHR VulkanWindow::createSurface(const vk::Instance& instance) const {
     return instance.createXlibSurfaceKHR(vk::XlibSurfaceCreateInfoKHR()
         .setDpy(impl->display)
         .setWindow(impl->window)
@@ -43,7 +43,7 @@ vk::SurfaceKHR VulkanWindow::createSurface(const vk::Instance& instance) {
 }
 #endif
 
-VkSurfaceKHR VulkanWindow::createSurface(const VkInstance& instance) {
+VkSurfaceKHR VulkanWindow::createSurface(const VkInstance& instance) const {
     VkXlibSurfaceCreateInfoKHR ci = {};
     ci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
     ci.dpy = impl->display;
