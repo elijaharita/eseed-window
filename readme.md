@@ -157,7 +157,7 @@ Called when the window is resized. `e` contains the new window size.
 window.moveHandler = [](esd::wnd::MoveEvent e) { ... };
 ```
 
-Called when the window is moved. `e` containst the new window position.
+Called when the window is moved. `e` contains the new window position.
 
 ### Vulkan support
 The `esd::wnd::VulkanWindow` class is a helper class extending the base window class to provide platform-specific Vulkan functionality (surface creation). Both the C Vulkan library and C++ bindings (`vulkan.hpp`) are supported.

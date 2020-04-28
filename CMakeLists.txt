@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(eseed_window)
 
-option(ESD_WND_BUILD_EXAMPLES OFF)
-option(ESD_WND_ENABLE_VULKAN_SUPPORT OFF)
+option(ESD_WND_BUILD_EXAMPLES OFF "Build Examples")
+option(ESD_WND_ENABLE_VULKAN_SUPPORT OFF "Enable Vulkan Support")
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -20,17 +20,32 @@ if(ESD_WND_ENABLE_VULKAN_SUPPORT)
     target_compile_definitions(eseed_window PRIVATE ESD_WND_INCLUDE_VULKAN_HPP)
 endif()
 
+# Auto detect platform if not manually set
+
+if(NOT ESD_WND_PLATFORM)
+    if(WIN32)
+        set(PLATFORM "Win32")
+    elseif(UNIX AND NOT APPLE)
+        set(PLATFORM "X11")
+    else()
+        message(FATAL "Could not auto detect platform, it may be unimplemented")
+    endif()
+
+    set(ESD_WND_PLATFORM PLATFORM CACHE STRING "Target Platform" FORCE)
+endif()
+
 # Choose platform specific implementation
 
-if(WIN32)
+if(ESD_WND_PLATFORM STREQUAL "Win32")
+
     message("Using Win32")
     target_sources(eseed_window PRIVATE src/win32/window.cpp)
     if(ESD_WND_ENABLE_VULKAN_SUPPORT)
         target_sources(eseed_window PRIVATE src/win32/vulkanwindow.cpp)
     endif()
-endif()
 
-if(UNIX AND NOT APPLE)
+elseif(ESD_WND_PLATFORM STREQUAL "X11")
+
     message("Using X11")
     target_sources(eseed_window PRIVATE src/x11/window.cpp)
     find_package(X11 REQUIRED)
@@ -38,6 +53,11 @@ if(UNIX AND NOT APPLE)
     if(ESD_WND_ENABLE_VULKAN_SUPPORT)
         target_sources(eseed_window PRIVATE src/x11/vulkanwindow.cpp)
     endif()
+    
+else()
+
+    message(FATAL "Unkown platform, it may have been typed incorrectly or is unimplemented")
+
 endif()
 
 # Testing
