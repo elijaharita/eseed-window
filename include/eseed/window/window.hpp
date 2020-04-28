@@ -44,6 +44,7 @@ struct MoveEvent { WindowPos pos; };
 class Window {
 public:
     Window(std::string title, WindowSize size, std::optional<WindowPos> pos = std::nullopt);
+    Window(const Window&) = delete;
     ~Window();
 
     void setKeyHandler(std::function<void(KeyEvent)> handler) { keyHandler = handler; }
