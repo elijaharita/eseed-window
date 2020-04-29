@@ -19,11 +19,9 @@
 // SOFTWARE.
 
 #include <eseed/window/window.hpp>
-
-#include <CoreFoundation/CoreFoundation.h>
-#include <objc/objc.h>
-#include <objc/objc-runtime.h>
+#include "impl.hpp"
 #include <iostream>
+#include <vector>
 
 using namespace esd::wnd;
 
@@ -31,15 +29,69 @@ Window::Window(
     std::string title, 
     WindowSize size, 
     std::optional<WindowPos> pos
-) {
-    id app = nullptr;
-    id pool = reinterpret_cast<id>(objc_getClass("NSAutoreleasePool"));
+) { 
+    impl = std::make_unique<Impl>();
 
-    if (!pool) std::cout << "Could not create pool" << std::endl;
+    auto NSAutoreleasePool = objc_getClass("NSAutoreleasePool");
+    auto NSApplication = objc_getClass("NSApplication");
+    auto NSWindow = objc_getClass("NSWindow");
+    auto NSApp = objc_getClass("NSApp");
+
+    impl->pool = reinterpret_cast<id(*)(Class, SEL)>(objc_msgSend)(
+        NSAutoreleasePool, 
+        sel_registerName("alloc")
+    );
+    if (!impl->pool)
+        throw std::runtime_error("Could not create pool");
+    reinterpret_cast<void(*)(id, SEL)>(objc_msgSend)(
+        impl->pool, 
+        sel_registerName("init")
+    );
+
+    impl->app = reinterpret_cast<id(*)(Class, SEL)>(objc_msgSend)(
+        NSApplication, 
+        sel_registerName("sharedApplication")
+    );
+    if (!impl->app)
+        throw std::runtime_error("Could not create app");
+
+    impl->window = reinterpret_cast<id(*)(Class, SEL)>(objc_msgSend)(
+        NSWindow,
+        sel_registerName("alloc")
+    );
+    if (!impl->window)
+        throw std::runtime_error("Could not create window");
+    reinterpret_cast<void(*)(id, SEL, CGRect, int, int, BOOL)>(objc_msgSend)(
+        impl->window, 
+        sel_registerName("initWithContentRect:styleMask:backing:defer:"), 
+        CGRectMake(0, 0, 100, 100), 
+        0x3, 
+        2, 
+        NO
+    );
+    reinterpret_cast<void(*)(id, SEL)>(objc_msgSend)(
+        impl->window,
+        sel_registerName("center")
+    );
+    reinterpret_cast<void(*)(id, SEL, Ivar)>(objc_msgSend)(
+        impl->window,
+        sel_registerName("makeKeyAndOrderFront:"),
+        class_getClassVariable(NSApp, "mainWindow")
+    );
+
+    reinterpret_cast<void(*)(id, SEL)>(objc_msgSend)(
+        impl->app,
+        sel_registerName("run")
+    );
+
+    std::cout << "pool: " << impl->pool << std::endl;
 }
 
 Window::~Window() {
-    
+    reinterpret_cast<void(*)(id, SEL)>(objc_msgSend)(
+        impl->pool,
+        sel_registerName("release")
+    );
 }
 
 void Window::close() {
@@ -99,7 +151,7 @@ bool Window::isKeyDown(Key keyCode) {
 }
 
 bool Window::isKeyToggled(Key key) {
-    
+    return false;
 }
 
 CursorPos Window::getCursorPos() {

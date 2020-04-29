@@ -27,13 +27,13 @@ if(NOT ESD_WND_PLATFORM)
         set(PLATFORM "Win32")
     elseif(APPLE)
         set(PLATFORM "Cocoa")
-    elseif(UNIX)
+    elseif(UNIX) # Unix and not Apple
         set(PLATFORM "X11")
     else()
-        message(FATAL "Could not auto detect platform, it may be unimplemented")
+        message(FATAL_ERROR "Could not auto detect platform, it may be unimplemented")
     endif()
 
-    set(ESD_WND_PLATFORM PLATFORM CACHE STRING "Target Platform" FORCE)
+    set(ESD_WND_PLATFORM "${PLATFORM}" CACHE STRING "Target Platform" FORCE)
 endif()
 
 # Choose platform specific implementation
@@ -65,7 +65,7 @@ elseif(ESD_WND_PLATFORM STREQUAL "X11")
     
 else()
 
-    message(FATAL "Unkown platform, it may have been typed incorrectly or is unimplemented")
+    message(FATAL_ERROR "Unknown platform ${ESD_WND_PLATFORM}, it may have been typed incorrectly or is unimplemented")
 
 endif()
 

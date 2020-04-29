@@ -21,7 +21,17 @@
 #pragma once
 
 #include <eseed/window/window.hpp>
+#include <vector>
+#include <objc/objc.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreGraphics/CoreGraphics.h>
+#include <objc/objc-runtime.h>
 
 class esd::wnd::Window::Impl {
-
+public:
+    id pool;
+    id app;
+    id rect;
+    id mainWindow;
+    id window;
 };
