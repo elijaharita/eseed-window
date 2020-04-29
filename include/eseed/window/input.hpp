@@ -319,9 +319,8 @@ inline std::string getKeyName(Key key) {
     case Key::F24: return "F24";
     case Key::NumLock: return "Num Lock";
     case Key::ScrollLock: return "Scroll Lock";
+    default: return "Unknown Key";
     }
-
-    return "Unknown Key";
 }
 
 }
