@@ -23,42 +23,30 @@ endif()
 # Auto detect platform if not manually set
 
 if(NOT ESD_WND_PLATFORM)
+
     if(WIN32)
         set(PLATFORM "Win32")
     elseif(UNIX AND NOT APPLE)
         set(PLATFORM "X11")
     else()
-        message(FATAL "Could not auto detect platform, it may be unimplemented")
+        message(FATAL_ERROR "Could not auto detect platform, it may be unimplemented")
     endif()
 
-    set(ESD_WND_PLATFORM PLATFORM CACHE STRING "Target Platform" FORCE)
+    set(ESD_WND_PLATFORM ${PLATFORM} CACHE STRING "Target Platform" FORCE)
+
 endif()
+
+string(TOLOWER ${ESD_WND_PLATFORM} PLATFORM_DIR_NAME)
 
 # Choose platform specific implementation
 
-if(ESD_WND_PLATFORM STREQUAL "Win32")
+message("Using ${ESD_WND_PLATFORM}")
 
-    message("Using Win32")
-    target_sources(eseed_window PRIVATE src/win32/window.cpp)
-    if(ESD_WND_ENABLE_VULKAN_SUPPORT)
-        target_sources(eseed_window PRIVATE src/win32/vulkanwindow.cpp)
-    endif()
-
-elseif(ESD_WND_PLATFORM STREQUAL "X11")
-
-    message("Using X11")
-    target_sources(eseed_window PRIVATE src/x11/window.cpp)
-    find_package(X11 REQUIRED)
-    target_link_libraries(eseed_window ${X11_LIBRARIES})
-    if(ESD_WND_ENABLE_VULKAN_SUPPORT)
-        target_sources(eseed_window PRIVATE src/x11/vulkanwindow.cpp)
-    endif()
-    
-else()
-
-    message(FATAL "Unkown platform, it may have been typed incorrectly or is unimplemented")
-
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/platforms/${PLATFORM_DIR_NAME}")
+    message(FATAL_ERROR "Unkown platform, it may have been typed incorrectly or is unimplemented")
 endif()
+
+add_subdirectory("platforms/${PLATFORM_DIR_NAME}")
 
 # Testing
 

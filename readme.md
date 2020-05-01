@@ -247,8 +247,6 @@ int main() {
 
 Semantic versioning is used.
 
-All changes to the public API should be applied directly to the main branch, and never to individual platform dev branches. This minimizes merge conflicts by compartmentalizing changes for the public include headers, and each platform implementation.
+Each platform in development should have its own development branch named `[platform]-dev`, e.g. `win32-dev`. It should refrain from modifying any non-platform-specific files, except for very simple files like `.gitignore`. All changes to the public API should be applied directly to the main branch, and never to individual platform dev branches. This minimizes merge conflicts by compartmentalizing changes for the public include headers, and each platform implementation.
 
-Each platform in development should have its own development branch named `[platform]-dev`, e.g. `win32-dev`. It should refrain from modifying any non-platform-specific files, except when absolutely necessary such as for `CMakeLists.txt` or for very simple files like `.gitignore`.
-
-TODO: add platform-specific CMake subdirectories to minimize modification of the main file.
+Platform-specific source files are located under their own respectively named folder in the `platforms/` directory. Naming matters, as CMake will add the platform-specific subdirectory based on the value of `${ESD_WND_PLATFORM}`. Platform-specific folders should be named in lowercase.
