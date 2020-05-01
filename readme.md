@@ -1,5 +1,6 @@
 # eseed window
-`namespace esd::wnd`
+
+`namespace esd::wnd` | MIT License | 0.1.0 (Prerelease)
 
 ![Example Graphic](example-graphic.jpg)
 
@@ -63,6 +64,22 @@ Hello everyone. This project is my second library, and began as a part of my gam
 - Anything else as it comes along :)
 
 ## Ghetto temporary documentation
+
+### Building
+
+ESeed Window uses CMake.
+
+CMake Configuration Options:
+- ESD_WND_BUILD_EXAMPLES *(ON, OFF | Default - OFF)*
+- ESD_WND_ENABLE_VULKAN_SUPPORT *(ON, OFF | Default - OFF)*
+  - Must be enabled to use Vulkan helper functions
+- ESD_WND_PLATFORM *(Win32, X11 | Default - Auto Detect)*
+  - This option may be manually set in order to specify a target platform for a different OS, otherwise the platform will be auto-detected
+  - If no value is provided, Linux operating systems will default to X11, and Windows will default to Win32
+
+#### Linking via a CMake subdirectory
+
+If you are building your project with CMake as well, the library can easily be included in your project with `add_subdirectory(path/to/eseed-window)` and subsequently `target_link_libraries(target eseed_window)`.
 
 ### Basics
 At the moment, the only supported rendering API is Vulkan. The library is currently implemented for Win32 and X11.
@@ -225,3 +242,13 @@ int main() {
     instance.destroy();
 }
 ```
+
+## Development notes
+
+Semantic versioning is used.
+
+All changes to the public API should be applied directly to the main branch, and never to individual platform dev branches. This minimizes merge conflicts by compartmentalizing changes for the public include headers, and each platform implementation.
+
+Each platform in development should have its own development branch named `[platform]-dev`, e.g. `win32-dev`. It should refrain from modifying any non-platform-specific files, except when absolutely necessary such as for `CMakeLists.txt` or for very simple files like `.gitignore`.
+
+TODO: add platform-specific CMake subdirectories to minimize modification of the main file.
